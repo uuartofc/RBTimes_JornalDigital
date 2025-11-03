@@ -392,7 +392,8 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     if (window.location.pathname.includes('index.html')) {
-        // CORREÇÃO: Chama loadAllPosts() com atraso para garantir o carregamento inicial estável.
+        // CORREÇÃO FINAL: Usa setTimeout para garantir o carregamento inicial estável na Vercel.
+        // Isso resolve a falha ao abrir em nova aba.
         setTimeout(loadAllPosts, 50);
         
         const suggestionForm = document.getElementById('suggestionForm');
@@ -403,6 +404,7 @@ document.addEventListener('DOMContentLoaded', () => {
     
     document.querySelectorAll('header nav a').forEach(link => {
         link.addEventListener('click', function(e) {
+            // Permite a navegação para arquivos externos (como admin.html)
             if (!this.getAttribute('href').startsWith('#')) {
                 return; 
             }
@@ -415,7 +417,8 @@ document.addEventListener('DOMContentLoaded', () => {
             });
             document.getElementById(targetId).classList.add('active');
 
-            // CORREÇÃO: Força o reload dos posts ao clicar explicitamente no link 'Posts' (#home).
+            // FALLBACK: Força o reload dos posts ao clicar explicitamente no link 'Posts' (#home).
+            // Isso resolve a falha de cache ao voltar de admin.html.
             if(targetId === 'home') {
                 loadAllPosts();
             }
