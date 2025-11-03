@@ -8,7 +8,6 @@ const supabaseClient = createClient(supabaseConfig.url, supabaseConfig.key);
 
 let currentPostId = null;
 
-// LÓGICA DE AUTENTICAÇÃO
 async function checkAdminPassword(password) {
     const { data, error } = await supabaseClient
         .from('admin_config') 
@@ -37,7 +36,6 @@ function handleLogout() {
     window.location.reload();
 }
 
-// MÓDULO DE SUGESTÕES (ADMIN.HTML)
 async function loadSuggestions() {
     const listDiv = document.getElementById('suggestionList');
     if (!listDiv) {
@@ -93,7 +91,6 @@ async function deleteSuggestion(id) {
     }
 }
 
-// LÓGICA CRUD DE POSTS (ADMIN.HTML)
 async function loadAdminPosts() {
     const postListDiv = document.getElementById('postList');
     if (!postListDiv) return;
@@ -216,7 +213,6 @@ async function deletePost(postId) {
     }
 }
 
-// FRONTEND (INDEX.HTML)
 async function loadAllPosts() {
     const postsGrid = document.getElementById('postsGrid');
     if (!postsGrid) return;
@@ -321,9 +317,7 @@ async function handleSuggestionSubmit(e) {
     setTimeout(() => messageEl.style.display = 'none', 5000);
 }
 
-// INICIALIZAÇÃO E LISTENERS
 document.addEventListener('DOMContentLoaded', () => {
-    // Inicialização da página de administração
     if (window.location.pathname.includes('admin.html')) {
         const adminLoginForm = document.getElementById('adminLoginForm');
         const adminContentDiv = document.querySelector('.admin-content');
@@ -337,7 +331,6 @@ document.addEventListener('DOMContentLoaded', () => {
             loginCard.style.display = 'none';
             adminContentDiv.style.display = 'block';
             
-            // Carregamento de dados após autenticação
             loadSuggestions(); 
             loadAdminPosts();  
         } else {
@@ -359,7 +352,6 @@ document.addEventListener('DOMContentLoaded', () => {
         
         if (logoutBtn) logoutBtn.addEventListener('click', handleLogout);
 
-        // Listener de delegação para exclusão de sugestão
         const suggestionList = document.getElementById('suggestionList');
         if (suggestionList) {
              suggestionList.addEventListener('click', (e) => {
@@ -369,7 +361,6 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         }
         
-        // Listeners do CRUD de Posts
         document.getElementById('addPostBtn').addEventListener('click', () => {
             currentPostId = null;
             document.getElementById('postForm').style.display = 'block';
@@ -400,9 +391,9 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // Inicialização da página principal (index.html)
     if (window.location.pathname.includes('index.html')) {
-        loadAllPosts(); // CARREGAMENTO IMEDIATO
+        // CORREÇÃO APLICADA: Atrasa a chamada em 50ms para garantir que o Supabase esteja pronto.
+        setTimeout(loadAllPosts, 50);
         
         const suggestionForm = document.getElementById('suggestionForm');
         if(suggestionForm) {
@@ -410,15 +401,12 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
     
-    // Configuração de navegação para todas as páginas
     document.querySelectorAll('header nav a').forEach(link => {
         link.addEventListener('click', function(e) {
-            // Permite a navegação para arquivos externos (como admin.html)
             if (!this.getAttribute('href').startsWith('#')) {
                 return; 
             }
             
-            // Lógica de navegação entre seções (para links #hash)
             e.preventDefault();
             const targetId = this.getAttribute('href').substring(1);
             
@@ -426,8 +414,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 section.classList.remove('active');
             });
             document.getElementById(targetId).classList.add('active');
-
-            // REMOVIDO: A chamada redundante a loadAllPosts() foi retirada daqui.
         });
     });
 });
