@@ -1,5 +1,4 @@
 const supabaseConfig = {
-    // ATUALIZE AQUI COM SUAS CHAVES REAIS
     url: 'https://ktasovkzriskdjrtxkpk.supabase.co', 
     key: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt0YXNvdmt6cmlza2RqcnR4a3BrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjE2NjEzNzcsImV4cCI6MjA3NzIzNzM3N30.tkmIYZ0KSWPCYhYEk7139Qvn0BHcE4gWMGNujR6arGw' 
 };
@@ -9,10 +8,7 @@ const supabaseClient = createClient(supabaseConfig.url, supabaseConfig.key);
 
 let currentPostId = null;
 
-// =========================================================
-// 🔑 LÓGICA DE AUTENTICAÇÃO SIMPLIFICADA
-// =========================================================
-
+// LÓGICA DE AUTENTICAÇÃO
 async function checkAdminPassword(password) {
     const { data, error } = await supabaseClient
         .from('admin_config') 
@@ -41,21 +37,13 @@ function handleLogout() {
     window.location.reload();
 }
 
-// =========================================================
-// 📧 MÓDULO DE SUGESTÕES (ADMIN.HTML) - CORRIGIDO
-// =========================================================
-
-/**
- * Função CORRIGIDA para carregar sugestões, usando mapeamento explícito
- * para string e injeção única no DOM (mais robusto para renderização).
- */
+// MÓDULO DE SUGESTÕES (ADMIN.HTML)
 async function loadSuggestions() {
     const listDiv = document.getElementById('suggestionList');
     if (!listDiv) {
         console.error("Elemento #suggestionList não encontrado no DOM.");
         return;
     }
-    // Exibe o carregamento
     listDiv.innerHTML = '<p class="loading-message">Carregando sugestões...</p>';
 
     const { data: sugestoes, error } = await supabaseClient
@@ -64,18 +52,16 @@ async function loadSuggestions() {
         .order('created_at', { ascending: false });
 
     if (error) {
-        console.error("ERRO AO CARREGAR SUGESTÕES (RLS ou Configuração):", error);
+        console.error("ERRO AO CARREGAR SUGESTÕES:", error);
         listDiv.innerHTML = `<p class="error-message">Erro ao carregar sugestões: ${error.message}.</p>`;
         return;
     }
 
-    // Se não há dados ou a lista está vazia
     if (!sugestoes || sugestoes.length === 0) {
         listDiv.innerHTML = `<p>Nenhuma sugestão enviada.</p>`;
         return;
     }
     
-    // Mapeia os dados para uma lista de strings HTML
     const suggestionsHtml = sugestoes.map(s => {
         return `
             <div class="suggestion-item">
@@ -89,9 +75,7 @@ async function loadSuggestions() {
         `;
     }).join('');
 
-    // RENDERIZAÇÃO EXPLÍCITA: Define o innerHTML do container uma única vez.
     listDiv.innerHTML = suggestionsHtml;
-    console.log(`[DEBUG] Sugestões carregadas com sucesso: ${sugestoes.length} itens renderizados.`);
 }
 
 async function deleteSuggestion(id) {
@@ -109,10 +93,7 @@ async function deleteSuggestion(id) {
     }
 }
 
-// =========================================================
-// ⚙️ LÓGICA CRUD DE POSTS (ADMIN.HTML) - MANTIDA
-// =========================================================
-
+// LÓGICA CRUD DE POSTS (ADMIN.HTML)
 async function loadAdminPosts() {
     const postListDiv = document.getElementById('postList');
     if (!postListDiv) return;
@@ -235,10 +216,7 @@ async function deletePost(postId) {
     }
 }
 
-// =========================================================
-// 🖼️ FRONTEND (INDEX.HTML) - MANTIDO
-// =========================================================
-
+// FRONTEND (INDEX.HTML)
 async function loadAllPosts() {
     const postsGrid = document.getElementById('postsGrid');
     if (!postsGrid) return;
@@ -343,10 +321,7 @@ async function handleSuggestionSubmit(e) {
     setTimeout(() => messageEl.style.display = 'none', 5000);
 }
 
-// =========================================================
-// 🚀 INICIALIZAÇÃO E LISTENERS
-// =========================================================
-
+// INICIALIZAÇÃO E LISTENERS
 document.addEventListener('DOMContentLoaded', () => {
     // Inicialização da página de administração
     if (window.location.pathname.includes('admin.html')) {
@@ -425,9 +400,9 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // Inicialização da página principal
+    // Inicialização da página principal (index.html)
     if (window.location.pathname.includes('index.html')) {
-        loadAllPosts();
+        loadAllPosts(); // CARREGAMENTO IMEDIATO
         
         const suggestionForm = document.getElementById('suggestionForm');
         if(suggestionForm) {
@@ -438,7 +413,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Configuração de navegação para todas as páginas
     document.querySelectorAll('header nav a').forEach(link => {
         link.addEventListener('click', function(e) {
-            // CORREÇÃO: Permite a navegação para arquivos externos (como admin.html)
+            // Permite a navegação para arquivos externos (como admin.html)
             if (!this.getAttribute('href').startsWith('#')) {
                 return; 
             }
@@ -452,7 +427,7 @@ document.addEventListener('DOMContentLoaded', () => {
             });
             document.getElementById(targetId).classList.add('active');
 
-            if(targetId === 'home') loadAllPosts();
+            // REMOVIDO: A chamada redundante a loadAllPosts() foi retirada daqui.
         });
     });
 });
