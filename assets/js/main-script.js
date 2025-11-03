@@ -392,7 +392,6 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     if (window.location.pathname.includes('index.html')) {
-        // CORREÇÃO APLICADA: Atrasa a chamada em 50ms para garantir que o Supabase esteja pronto.
         setTimeout(loadAllPosts, 50);
         
         const suggestionForm = document.getElementById('suggestionForm');
@@ -414,6 +413,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 section.classList.remove('active');
             });
             document.getElementById(targetId).classList.add('active');
+
+            // CORREÇÃO: Força o reload dos posts ao clicar explicitamente no link 'Posts' (#home).
+            if(targetId === 'home') {
+                loadAllPosts();
+            }
         });
     });
 });
