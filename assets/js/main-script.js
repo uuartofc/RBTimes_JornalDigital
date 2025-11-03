@@ -216,6 +216,14 @@ async function deletePost(postId) {
 async function loadAllPosts() {
     const postsGrid = document.getElementById('postsGrid');
     if (!postsGrid) return;
+    
+    // Altera o texto do botão de recarga (se existir)
+    const reloadBtn = document.getElementById('reloadPostsBtn');
+    if(reloadBtn) {
+        reloadBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Carregando...';
+        reloadBtn.disabled = true;
+    }
+    
     postsGrid.innerHTML = '<p class="loading">Carregando as últimas notícias...</p>';
 
     const { data: posts, error } = await supabaseClient
@@ -223,8 +231,14 @@ async function loadAllPosts() {
         .select('*')
         .order('data_publicacao', { ascending: false }); 
 
+    if (reloadBtn) {
+        // Reverte o texto do botão após o carregamento
+        reloadBtn.innerHTML = '<i class="fas fa-sync-alt"></i> Recarregar Posts';
+        reloadBtn.disabled = false;
+    }
+
     if (error) {
-        postsGrid.innerHTML = `<p class="error-message">Erro ao carregar posts: ${error.message}</p>`;
+        postsGrid.innerHTML = `<p class="error-message">Erro ao carregar posts: ${error.message}. Tente recarregar.</p>`;
         return;
     }
 
@@ -392,19 +406,24 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     if (window.location.pathname.includes('index.html')) {
-        // CORREÇÃO FINAL: Usa setTimeout para garantir o carregamento inicial estável na Vercel.
-        // Isso resolve a falha ao abrir em nova aba.
+        // SOLUÇÃO 1: Carregamento inicial com atraso para garantir estabilidade na Vercel.
         setTimeout(loadAllPosts, 50);
         
         const suggestionForm = document.getElementById('suggestionForm');
         if(suggestionForm) {
             suggestionForm.addEventListener('submit', handleSuggestionSubmit);
         }
+        
+        // SOLUÇÃO 2: Listener para o novo botão de recarregar
+        const reloadBtn = document.getElementById('reloadPostsBtn');
+        if (reloadBtn) {
+            reloadBtn.addEventListener('click', loadAllPosts);
+        }
     }
     
     document.querySelectorAll('header nav a').forEach(link => {
         link.addEventListener('click', function(e) {
-            // Permite a navegação para arquivos externos (como admin.html)
+            // Permite a navegação para arquivos externos (admin.html)
             if (!this.getAttribute('href').startsWith('#')) {
                 return; 
             }
@@ -417,8 +436,7 @@ document.addEventListener('DOMContentLoaded', () => {
             });
             document.getElementById(targetId).classList.add('active');
 
-            // FALLBACK: Força o reload dos posts ao clicar explicitamente no link 'Posts' (#home).
-            // Isso resolve a falha de cache ao voltar de admin.html.
+            // SOLUÇÃO 3: Fallback (reforço) ao clicar no link "Posts"
             if(targetId === 'home') {
                 loadAllPosts();
             }

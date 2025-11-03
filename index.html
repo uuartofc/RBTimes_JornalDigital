@@ -29,35 +29,35 @@
 
     <div class="container">
         <section id="home" class="page-section active">
-            <h1>Últimas Notícias</h1>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                <h1>Últimas Notícias</h1>
+                <button id="reloadPostsBtn" class="primary-btn" style="padding: 8px 15px; font-size: 0.9em;">
+                    <i class="fas fa-sync-alt"></i> Recarregar Posts
+                </button>
+            </div>
             <div id="postsGrid" class="posts-grid">
                 </div>
         </section>
-
+        
         <section id="post-details" class="page-section">
-            <a href="#home" class="back-button" onclick="document.getElementById('post-details').classList.remove('active'); document.getElementById('home').classList.add('active');"><i class="fas fa-arrow-left"></i> Voltar para Posts</a>
-            <div class="detail-post-container">
-                <div class="detail-header">
-                    <img id="detailImage" src="images/default-cover.png" alt="Imagem de capa do Post">
-                </div>
-                
-                <h2 id="detailTitle">Título do Post</h2>
-                
+            <div class="detail-container">
+                <img id="detailImage" src="images/default-cover.png" alt="Imagem do Post" class="detail-image">
+                <h1 id="detailTitle">Título do Post</h1>
                 <div class="detail-meta">
-                    <span id="detailDate"></span> | Publicado por: <span id="detailAuthor"></span>
+                    <span id="detailDate">01/01/2024</span>
+                    |
+                    <span id="detailAuthor">Autor</span>
                 </div>
-
-                <div id="detailContent">
+                <div id="detailTags" class="tag-list">
                     </div>
-                
-                <div id="detailTags">
+                <div id="detailContent" class="detail-content">
                     </div>
             </div>
         </section>
-        
+
         <section id="about" class="page-section">
-            <h1>Sobre o Projeto</h1>
-            <p>Este é um projeto de demonstração de um Jornal Digital utilizando Supabase como backend e gerenciamento completo de conteúdo via painel administrativo. O foco é em desempenho, facilidade de uso e autenticação simplificada.</p>
+            <h1>Sobre o <span>RB Times</span></h1>
+            <p>Este é um projeto de Jornal Digital utilizando Supabase como backend e gerenciamento completo de conteúdo via painel administrativo. O foco é em desempenho, facilidade de uso e autenticação simplificada.</p>
             <p>Criado por [Seu Nome/U.art] com foco em desenvolvimento web e sistemas dinâmicos.</p>
         </section>
         
@@ -86,5 +86,4 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="assets/js/main-script.js"></script>
 </body>
-
 </html>
