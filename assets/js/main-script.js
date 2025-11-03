@@ -392,6 +392,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     if (window.location.pathname.includes('index.html')) {
+        // CORREÇÃO: Chama loadAllPosts() com atraso para garantir o carregamento inicial estável.
         setTimeout(loadAllPosts, 50);
         
         const suggestionForm = document.getElementById('suggestionForm');
