@@ -15,7 +15,6 @@
 
     <div class="container">
         <main class="content">
- ,minw ,..........
             <div style="text-align: right; margin-bottom: 30px;">
                 <a href="index.html" style="
                     background-color: var(--primary-blue);
@@ -26,8 +25,8 @@
                     text-decoration: none; 
                     display: inline-block; 
                     transition: background-color 0.3s; 
-                " onmouseover="this.style.backgroundColor='var(--primary-blue)'"
-                    onmouseout="this.style.backgroundColor='var(--error-color)'">
+                " onmouseover="this.style.backgroundColor='var(--secondary-blue)'"
+                    onmouseout="this.style.backgroundColor='var(--primary-blue)'">
                     Voltar para o Site <i class="fas fa-home"></i>
                 </a>
             </div>
@@ -71,7 +70,7 @@
                         <input type="text" id="postTitle" required>
 
                         <label for="postAuthor">Autor:</label>
-                        <input type="text" id="postAuthor" required>,
+                        <input type="text" id="postAuthor" required>
 
                         <label for="postDate">Data de Publicação:</label>
                         <input type="date" id="postDate">
@@ -83,6 +82,9 @@
                         <textarea id="postShortDesc" required rows="2"></textarea>
 
                         <label for="postContent">Conteúdo Completo (Aceita HTML):</label>
+                        <button type="button" id="insertImageToContentBtn" class="admin-action-btn" style="padding: 8px 15px; margin-bottom: 10px; font-size: 0.9em;">
+                            <i class="fas fa-image"></i> Inserir Imagem no Texto
+                        </button>
                         <textarea id="postContent" rows="10"></textarea>
 
                         <label for="postTags">Tags (separar por vírgula):</label>
@@ -92,7 +94,31 @@
                         <button type="button" id="cancelEditBtn" style="background-color: #6c757d;">Cancelar</button>
                     </form>
                 </div>
-            </div>
+
+                <div class="admin-content-card">
+                    <h2>Gerenciar Galeria de Imagens</h2>
+                    <button id="addImageBtn" class="admin-action-btn">Adicionar Nova Imagem</button>
+
+                    <div id="galleryList" class="post-list">
+                        </div>
+                </div>
+
+                <div id="galleryForm" class="form-card" style="display: none;">
+                    <h3>Editor de Imagem da Galeria</h3>
+                    <form id="galleryEditorForm">
+                        <input type="hidden" id="imageId">
+                        <label for="imageUrl">URL da Imagem (Ex: https://seusite.com/imagem.jpg):</label>
+                        <input type="url" id="imageUrl" required>
+
+                        <label for="imageAltText">Texto Alternativo (Alt Text):</label>
+                        <input type="text" id="imageAltText" required>
+
+                        <button type="submit">Salvar Imagem</button>
+                        <button type="button" id="cancelImageEditBtn"
+                            style="background-color: #6c757d;">Cancelar</button>
+                    </form>
+                </div>
+                </div>
         </main>
     </div>
 
