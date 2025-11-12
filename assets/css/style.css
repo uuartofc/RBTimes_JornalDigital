@@ -4,20 +4,20 @@
 
 :root {
     /* Paleta Monocromática Azul/Branco */
-    --primary-blue: #0A66C2; /* Azul Corporativo Forte (Destaque principal) */
-    --secondary-blue: #1C86EE; /* Azul de Ação/Hover */
-    --accent-blue-light: #E6F0FF; /* Azul Muito Claro (Fundo de Destaque) */
-    --background-light: #FFFFFF; /* Fundo Principal Limpo */
-    --text-dark: #1A1A1A; /* Texto de Alto Contraste */
-    --text-medium: #555555; /* Texto de Corpo/Metadados */
-    --border-subtle: #ECECEC; /* Linhas de Separação Mínimas */
-    --card-shadow: 0 4px 20px rgba(10, 102, 194, 0.08); /* Sombra sutil de profundidade (Azul) */
+    --primary-blue: #0A66C2; 
+    --secondary-blue: #1C86EE; 
+    --accent-blue-light: #E6F0FF; 
+    --background-light: #FFFFFF; 
+    --text-dark: #1A1A1A; 
+    --text-medium: #555555; 
+    --border-subtle: #ECECEC; 
+    --card-shadow: 0 4px 20px rgba(10, 102, 194, 0.08); 
     --error-color: #f50404; 
 
     /* Configurações Globais */
-    --font-family: 'Poppins', 'Inter', sans-serif; /* Fonte geométrica moderna */
+    --font-family: 'Poppins', 'Inter', sans-serif; 
     --transition-fast: 0.2s ease-out;
-    --transition-complex: 0.4s cubic-bezier(0.25, 0.8, 0.25, 1); /* Curva mais suave e dramática */
+    --transition-complex: 0.4s cubic-bezier(0.25, 0.8, 0.25, 1); 
 }
 
 /* Base Reset */
@@ -31,9 +31,9 @@ body {
     font-family: var(--font-family);
     background-color: var(--background-light);
     color: var(--text-dark);
-    line-height: 1.7; /* Maior espaçamento para leitura moderna */
+    line-height: 1.7; 
     min-height: 100vh;
-    overflow-x: hidden; /* Evita scroll horizontal em transições */
+    overflow-x: hidden; 
 }
 
 a {
@@ -44,7 +44,7 @@ a {
 
 a:hover {
     color: var(--secondary-blue);
-    text-decoration: underline; /* Adiciona leve sublinhado ao link */
+    text-decoration: underline; 
 }
 
 /* =========================================================
@@ -53,43 +53,37 @@ a:hover {
 header {
     background-color: var(--background-light);
     padding: 18px 40px;
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05); /* Sombra mais limpa */
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05); 
     position: sticky;
     top: 0;
     z-index: 1000;
-    border-bottom: 3px solid var(--accent-blue-light); /* Toque de cor sutil na base */
+    border-bottom: 3px solid var(--accent-blue-light); 
 }
 
 .header-container {
-    max-width: 1280px; /* Levemente mais largo */
+    max-width: 1280px; 
     margin: 0 auto;
     display: flex;
     justify-content: space-between;
     align-items: center;
 }
 
-.logo {
-    font-family: 'Inter', sans-serif;
-    font-size: 2.8em;
-    font-weight: 800; /* Mais impacto */
-    letter-spacing: -1px; /* Visual mais apertado/moderno */
-    color: var(--primary-blue);
-    text-transform: uppercase;
-    transition: transform var(--transition-fast);
+.site-title-container {
+    display: flex;
+    align-items: center;
 }
 
-.logo:hover {
-    transform: scale(1.02);
+.header-icon {
+    width: 80px; 
+    height: 80px; 
+    margin-right: 0; 
+    filter: drop-shadow(0 2px 5px rgba(0, 102, 194, 0.5)); 
 }
 
-.logo span {
-    color: var(--secondary-blue);
-    opacity: 0.8;
-}
 
 header nav a {
     color: var(--text-dark);
-    margin-left: 35px; /* Mais espaço */
+    margin-left: 35px; 
     font-size: 1.05em;
     font-weight: 600;
     position: relative;
@@ -117,18 +111,6 @@ header nav a:hover, header nav a.active {
     color: var(--primary-blue);
 }
 
-.site-title-container {
-    display: flex;
-    align-items: center;
-}
-
-.header-icon {
-    width: 45px;
-    height: 45px;
-    margin-right: 12px;
-    filter: drop-shadow(0 2px 5px rgba(0, 102, 194, 0.5)); /* Sombra azul no ícone */
-}
-
 
 /* =========================================================
     LAYOUT E SEÇÕES
@@ -146,7 +128,7 @@ header nav a:hover, header nav a.active {
 
 .page-section.active {
     display: block;
-    animation: fadeIn 0.8s ease-out; /* Adiciona uma animação de fade */
+    animation: fadeIn 0.8s ease-out; 
 }
 
 @keyframes fadeIn {
@@ -169,35 +151,35 @@ h1 {
 .posts-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-    gap: 30px; /* Ajuste o espaçamento */
+    gap: 30px; 
 }
 
 .post-card {
     background-color: var(--background-light);
     border: 1px solid var(--border-subtle);
-    border-radius: 12px; /* Mais arredondado */
+    border-radius: 12px; 
     overflow: hidden;
     cursor: pointer;
     box-shadow: var(--card-shadow);
-    transition: all var(--transition-complex); /* Transição em todos os estados */
+    transition: all var(--transition-complex); 
     position: relative;
 }
 
 .post-card:hover {
-    box-shadow: 0 8px 30px rgba(10, 102, 194, 0.2); /* Sombra mais intensa */
-    transform: translateY(-8px) scale(1.01); /* Efeito 3D sutil */
-    border-color: var(--secondary-blue); /* Borda destaca ao hover */
+    box-shadow: 0 8px 30px rgba(10, 102, 194, 0.2); 
+    transform: translateY(-8px) scale(1.01); 
+    border-color: var(--secondary-blue); 
 }
 
 .post-card img {
     width: 100%;
-    height: 250px; /* Levemente mais alto */
+    height: 250px; 
     object-fit: cover;
     transition: transform var(--transition-complex);
 }
 
 .post-card:hover img {
-    transform: scale(1.05); /* Zoom sutil na imagem */
+    transform: scale(1.05); 
     filter: brightness(1.05);
 }
 
@@ -219,15 +201,28 @@ h1 {
     margin-bottom: 15px;
 }
 
+/* CORREÇÃO 3: Ajuste de Separador para o Post Meta */
 .post-meta {
     font-size: 0.9em;
     color: #999;
-    display: flex;
-    justify-content: space-between;
+    /* REMOVIDO: display: flex para evitar a quebra do separador, agora flui como texto inline */
+    /* justify-content: flex-start; REMOVIDO */
+}
+
+/* Adiciona o separador vertical ( | ) usando um pseudo-elemento inline */
+.post-meta .date::after {
+    content: " | ";
+    color: #BBBBBB;
+    /* Adiciona espaçamento dos dois lados do separador */
+    margin: 0 5px; 
+}
+
+/* Garante que o último span (author) não tenha separador extra */
+.post-meta .author::before {
+    content: none; 
 }
 
 .post-meta span {
-    margin-right: 0;
     transition: color var(--transition-fast);
 }
 
@@ -267,11 +262,21 @@ h1 {
     font-style: normal;
     font-size: 1.05em;
     font-weight: 500;
+    /* MANTIDO: display: flex para alinhamento vertical no detail-meta (página com espaço) */
+    display: flex; 
+    align-items: center;
+}
+
+/* Garante que o separador na página de detalhes apareça */
+#post-details .detail-meta span:not(:last-child)::after {
+    content: " | ";
+    color: var(--text-medium);
+    margin: 0 10px;
 }
 
 #detailContent {
     font-size: 1.15em;
-    line-height: 1.9; /* Maior espaçamento para blocos de texto */
+    line-height: 1.9; 
     color: var(--text-dark);
 }
 
@@ -280,14 +285,14 @@ h1 {
     text-align: justify;
 }
 
-/* NOVO: Estilo para imagens INSERIDAS no corpo do texto (#detailContent img) */
+/* Estilo para imagens INSERIDAS no corpo do texto (#detailContent img) */
 #detailContent img {
     max-width: 100%; 
     height: auto; 
     display: block; 
-    margin: 20px auto; /* Centraliza a imagem no bloco de conteúdo */
-    border-radius: 6px; /* Borda levemente arredondada */
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1); /* Sombra sutil de decoração */
+    margin: 20px auto; 
+    border-radius: 6px; 
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1); 
 }
 
 #detailTags .tag {
@@ -365,7 +370,7 @@ textarea {
 input:focus, textarea:focus {
     border-color: var(--secondary-blue);
     outline: none;
-    box-shadow: 0 0 0 4px rgba(28, 134, 238, 0.2); /* Sombra de foco azul */
+    box-shadow: 0 0 0 4px rgba(28, 134, 238, 0.2); 
 }
 
 button {
@@ -378,7 +383,7 @@ button {
     transition: all var(--transition-fast);
     font-weight: 600;
     margin-right: 15px;
-    box-shadow: 0 4px 10px rgba(10, 102, 194, 0.3); /* Sombra para botões */
+    box-shadow: 0 4px 10px rgba(10, 102, 194, 0.3); 
 }
 
 button:hover {
@@ -408,13 +413,13 @@ button:hover {
 }
 
 .message.error {
-    background-color: #fcebeb; /* Fundo vermelho suave */
+    background-color: #fcebeb; 
     color: #dc3545;
     border: 1px solid #dc3545;
 }
 
 .message.success {
-    background-color: #edf7ed; /* Fundo verde suave */
+    background-color: #edf7ed; 
     color: #28a745;
     border: 1px solid #28a745;
 }
@@ -431,7 +436,7 @@ button:hover {
 }
 
 .post-list .post-item:hover {
-    background-color: var(--accent-blue-light); /* Destaque sutil ao passar o mouse */
+    background-color: var(--accent-blue-light); 
 }
 
 .post-list .post-item h3 {
@@ -458,9 +463,8 @@ button:hover {
 
 .gallery-grid {
     display: grid;
-    /* auto-fit e minmax(280px, 1fr) cria de 3 a 4 colunas em desktop/tablet */
     grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); 
-    gap: 15px; /* Espaçamento entre as imagens */
+    gap: 15px; 
 }
 
 .gallery-item {
@@ -469,7 +473,6 @@ button:hover {
     overflow: hidden;
     box-shadow: var(--card-shadow);
     position: relative;
-    /* Container de proporção fixa para manter a consistência. Proporção 4:3 */
     padding-bottom: 75%; 
     height: 0;
     cursor: pointer;
@@ -487,7 +490,6 @@ button:hover {
     left: 0;
     width: 100%;
     height: 100%;
-    /* object-fit: cover para redimensionar sem distorção. */
     object-fit: cover;
     transition: filter var(--transition-fast);
 }
@@ -518,6 +520,104 @@ button:hover {
     transform: translateY(0);
 }
 
+/* =========================================================
+    MODAL / LIGHTBOX DA GALERIA
+    ========================================================= */
+
+.modal {
+    display: none; 
+    position: fixed; 
+    z-index: 2000; 
+    padding-top: 50px; 
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    overflow: auto; 
+    background-color: rgba(0, 0, 0, 0.9); 
+    animation: zoomIn 0.3s;
+}
+
+@keyframes zoomIn {
+    from { opacity: 0; transform: scale(0.95); }
+    to { opacity: 1; transform: scale(1); }
+}
+
+.modal-content {
+    margin: auto;
+    display: block;
+    
+    width: auto; 
+    height: auto;
+    
+    max-width: 95vw; 
+    max-height: 90vh; 
+    
+    object-fit: contain; 
+    border-radius: 8px;
+    box-shadow: 0 0 20px rgba(255, 255, 255, 0.2);
+}
+
+/* Texto de legenda (Alt Text) */
+#caption {
+    margin: 15px auto;
+    display: block;
+    width: 80%;
+    max-width: 700px;
+    text-align: center;
+    color: #ccc;
+    padding: 10px 0;
+    min-height: 50px; 
+    font-size: 1.1em;
+}
+
+/* Botão de fechar */
+.close-btn {
+    position: absolute;
+    top: 20px;
+    right: 35px;
+    color: #f1f1f1;
+    font-size: 40px;
+    font-weight: bold;
+    transition: 0.3s;
+    cursor: pointer;
+}
+
+.close-btn:hover,
+.close-btn:focus {
+    color: #bbb;
+    text-decoration: none;
+    cursor: pointer;
+}
+
+/* Botões de Navegação (Anterior/Próximo) */
+.prev, .next {
+    cursor: pointer;
+    position: absolute;
+    top: 50%;
+    width: auto;
+    padding: 16px;
+    margin-top: -50px;
+    color: white;
+    font-weight: bold;
+    font-size: 20px;
+    transition: 0.6s ease;
+    border-radius: 0 3px 3px 0;
+    user-select: none;
+    text-decoration: none;
+    background-color: rgba(0, 0, 0, 0.5);
+    z-index: 2001;
+}
+
+.next {
+    right: 0;
+    border-radius: 3px 0 0 3px;
+}
+
+.prev:hover, .next:hover {
+    background-color: rgba(0, 0, 0, 0.8);
+}
+
 
 /* =========================================================
     MEDIA QUERIES (Responsividade Aprimorada)
@@ -539,9 +639,11 @@ button:hover {
         flex-direction: column;
         text-align: center;
     }
-    .logo {
-        margin-bottom: 15px;
+    
+    .site-title-container {
+        margin-bottom: 10px;
     }
+    
     header nav {
         margin-top: 10px;
     }
@@ -573,16 +675,35 @@ button:hover {
     .post-list .post-item .actions {
         margin-top: 15px;
     }
+
+    /* Ajuste do Modal em Mobile */
+    .modal {
+        padding-top: 20px; 
+    }
+    .modal-content {
+        width: auto;
+        max-width: 95vw;
+        max-height: 90vh;
+    }
+    .close-btn {
+        top: 15px;
+        right: 15px;
+        font-size: 30px;
+    }
+    .prev, .next {
+        padding: 10px;
+        margin-top: -30px;
+        font-size: 16px;
+        background-color: rgba(0, 0, 0, 0.7); 
+    }
 }
 
 /* REQUISITO MOBILE: Imagens com 100% da largura em telas pequenas */
 @media (max-width: 600px) {
     .gallery-grid {
-        /* Força uma coluna de 100% para dispositivos muito pequenos */
         grid-template-columns: 1fr; 
     }
     .gallery-item {
-        /* Proporção ligeiramente mais alta em mobile */
         padding-bottom: 65%;
     }
 }

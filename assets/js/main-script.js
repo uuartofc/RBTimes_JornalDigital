@@ -7,10 +7,15 @@ const { createClient } = supabase;
 const supabaseClient = createClient(supabaseConfig.url, supabaseConfig.key);
 
 let currentPostId = null;
-let currentImageId = null; // Variável para controle da galeria
+let currentImageId = null;
+
+// Variáveis para a Galeria Interativa (NOVO)
+let galleryImagesData = [];
+let currentImageIndex = 0;
+let startX = 0; // Para detecção de swipe
 
 // =========================================================
-// FUNÇÕES DE AUTENTICAÇÃO E ADMIN
+// FUNÇÕES DE AUTENTICAÇÃO E ADMIN (Mantidas)
 // =========================================================
 
 async function checkAdminPassword(password) {
@@ -42,7 +47,7 @@ function handleLogout() {
 }
 
 // =========================================================
-// FUNÇÕES DE SUGESTÕES
+// FUNÇÕES DE SUGESTÕES (Mantidas)
 // =========================================================
 
 async function loadSuggestions() {
@@ -121,7 +126,7 @@ async function handleSuggestionSubmit(e) {
 
 
 // =========================================================
-// FUNÇÕES DE POSTS (ADMIN)
+// FUNÇÕES DE POSTS (ADMIN/FRONTEND) (Mantidas)
 // =========================================================
 
 async function loadAdminPosts() {
@@ -246,11 +251,6 @@ async function deletePost(postId) {
     }
 }
 
-
-// =========================================================
-// FUNÇÕES DE POSTS (FRONTEND)
-// =========================================================
-
 async function loadAllPosts() {
     const postsGrid = document.getElementById('postsGrid');
     if (!postsGrid) return;
@@ -309,12 +309,21 @@ async function loadAllPosts() {
     });
 }
 
-async function showPostDetails(postId) {
+function setActiveSection(targetId) {
     document.querySelectorAll('.page-section').forEach(section => {
         section.classList.remove('active');
     });
-    document.getElementById('post-details').classList.add('active');
-    window.scrollTo(0, 0);
+    const targetSection = document.getElementById(targetId);
+    if (targetSection) {
+        targetSection.classList.add('active');
+        window.scrollTo(0, 0);
+    }
+    document.querySelectorAll('header nav a').forEach(a => a.classList.remove('active'));
+    document.querySelector(`header nav a[href="#${targetId}"]`).classList.add('active');
+}
+
+async function showPostDetails(postId) {
+    setActiveSection('post-details');
 
     const { data: post, error } = await supabaseClient
         .from('posts')
@@ -324,8 +333,7 @@ async function showPostDetails(postId) {
 
     if (error) {
         alert('Erro ao carregar detalhes do post.');
-        document.getElementById('post-details').classList.remove('active');
-        document.getElementById('home').classList.add('active');
+        setActiveSection('home');
         return;
     }
     
@@ -348,7 +356,7 @@ async function showPostDetails(postId) {
 
 
 // =========================================================
-// FUNÇÕES DE GALERIA (ADMIN)
+// FUNÇÕES DE GALERIA (ADMIN) (Mantidas)
 // =========================================================
 
 async function loadAdminGallery() {
@@ -357,7 +365,7 @@ async function loadAdminGallery() {
     galleryListDiv.innerHTML = '<p>Carregando imagens da galeria...</p>';
 
     const { data: images, error } = await supabaseClient
-        .from('galeria') // Assumindo o nome da tabela no Supabase é 'galeria'
+        .from('galeria') 
         .select('*')
         .order('id', { ascending: false }); 
 
@@ -463,9 +471,39 @@ async function deleteImage(imageId) {
     }
 }
 
+
 // =========================================================
-// FUNÇÃO DE GALERIA (FRONTEND)
+// NOVO: FUNÇÕES DE GALERIA (FRONTEND COM LIGHTBOX)
 // =========================================================
+
+function showImage(index) {
+    if (galleryImagesData.length === 0) return;
+
+    currentImageIndex = (index + galleryImagesData.length) % galleryImagesData.length;
+    
+    const image = galleryImagesData[currentImageIndex];
+    document.getElementById('modalImage').src = image.image_url;
+    document.getElementById('caption').textContent = image.alt_text;
+
+    // Controla a visibilidade das setas
+    document.getElementById('prevImage').style.display = galleryImagesData.length > 1 ? 'block' : 'none';
+    document.getElementById('nextImage').style.display = galleryImagesData.length > 1 ? 'block' : 'none';
+}
+
+function openModal(index) {
+    document.getElementById('galleryModal').style.display = "block";
+    document.body.style.overflow = 'hidden'; // Evita o scroll de fundo
+    showImage(index);
+}
+
+function closeModal() {
+    document.getElementById('galleryModal').style.display = "none";
+    document.body.style.overflow = 'auto';
+}
+
+function changeImage(n) {
+    showImage(currentImageIndex + n);
+}
 
 async function loadGallery() {
     const galleryGrid = document.getElementById('galleryGrid');
@@ -474,7 +512,7 @@ async function loadGallery() {
     galleryGrid.innerHTML = '<p class="loading">Carregando imagens...</p>';
 
     const { data: images, error } = await supabaseClient
-        .from('galeria') // O nome da sua tabela
+        .from('galeria') 
         .select('*')
         .order('id', { ascending: false }); 
 
@@ -483,6 +521,7 @@ async function loadGallery() {
         return;
     }
 
+    galleryImagesData = images;
     galleryGrid.innerHTML = '';
     
     if (images.length === 0) {
@@ -490,14 +529,18 @@ async function loadGallery() {
         return;
     }
 
-    images.forEach(img => {
+    images.forEach((img, index) => {
         const imageCard = document.createElement('div');
         imageCard.classList.add('gallery-item');
 
         imageCard.innerHTML = `
-            <img src="${img.image_url}" alt="${img.alt_text}">
+            <img src="${img.image_url}" alt="${img.alt_text}" data-index="${index}">
             <div class="alt-text-overlay">${img.alt_text}</div>
         `;
+        
+        // Adiciona o listener para abrir o modal
+        imageCard.addEventListener('click', () => openModal(index));
+
         galleryGrid.appendChild(imageCard);
     });
 }
@@ -582,7 +625,7 @@ document.addEventListener('DOMContentLoaded', () => {
             postEditorForm.addEventListener('submit', savePost);
         }
         
-        // NOVO: Listener para Inserir Imagem no Conteúdo
+        // Listener para Inserir Imagem no Conteúdo
         const insertImageToContentBtn = document.getElementById('insertImageToContentBtn');
         if (insertImageToContentBtn) {
             insertImageToContentBtn.addEventListener('click', () => {
@@ -655,35 +698,80 @@ document.addEventListener('DOMContentLoaded', () => {
         if (reloadBtn) {
             reloadBtn.addEventListener('click', loadAllPosts);
         }
-    }
-    
-    // Navegação e Carregamento de Seções
-    document.querySelectorAll('header nav a').forEach(link => {
-        link.addEventListener('click', function(e) {
-            if (!this.getAttribute('href').startsWith('#')) {
-                return; 
-            }
-            
-            e.preventDefault();
-            const targetId = this.getAttribute('href').substring(1);
-            
-            document.querySelectorAll('.page-section').forEach(section => {
-                section.classList.remove('active');
+        
+        // Navegação e Carregamento de Seções
+        document.querySelectorAll('header nav a, .back-button').forEach(link => {
+            link.addEventListener('click', function(e) {
+                if (!this.getAttribute('href').startsWith('#')) {
+                    return; 
+                }
+                
+                e.preventDefault();
+                const targetId = this.getAttribute('href').substring(1);
+                
+                setActiveSection(targetId);
+
+                if(targetId === 'home') {
+                    loadAllPosts();
+                } else if (targetId === 'gallery') {
+                    loadGallery(); 
+                }
+            });
+        });
+
+        // =========================================================
+        // NOVO: LISTENERS DO MODAL DA GALERIA
+        // =========================================================
+        const galleryModal = document.getElementById('galleryModal');
+        const closeBtn = document.querySelector('.modal .close-btn');
+        const prevBtn = document.getElementById('prevImage');
+        const nextBtn = document.getElementById('nextImage');
+
+        if (galleryModal) {
+            closeBtn.onclick = closeModal;
+            prevBtn.onclick = () => changeImage(-1);
+            nextBtn.onclick = () => changeImage(1);
+
+            // Fechar ao clicar fora da imagem
+            galleryModal.addEventListener('click', (e) => {
+                if (e.target === galleryModal) {
+                    closeModal();
+                }
             });
             
-            const targetSection = document.getElementById(targetId);
-            if (targetSection) {
-                targetSection.classList.add('active');
-            }
-
-            if(targetId === 'home') {
-                loadAllPosts();
-            } else if (targetId === 'gallery') {
-                loadGallery(); // Carrega a galeria
-            }
+            // Navegação por teclado (Esc e Setas)
+            document.addEventListener('keydown', (e) => {
+                if (galleryModal.style.display === "block") {
+                    if (e.key === "Escape") {
+                        closeModal();
+                    } else if (e.key === "ArrowLeft") {
+                        changeImage(-1);
+                    } else if (e.key === "ArrowRight") {
+                        changeImage(1);
+                    }
+                }
+            });
             
-            document.querySelectorAll('header nav a').forEach(a => a.classList.remove('active'));
-            this.classList.add('active');
-        });
-    });
+            // Lógica de Swipe para mobile
+            galleryModal.addEventListener('touchstart', (e) => {
+                startX = e.touches[0].clientX;
+            });
+
+            galleryModal.addEventListener('touchend', (e) => {
+                const endX = e.changedTouches[0].clientX;
+                const deltaX = endX - startX;
+                
+                // Define um limite de swipe (ex: 50px)
+                if (Math.abs(deltaX) > 50) {
+                    if (deltaX > 0) {
+                        // Swipe para a direita -> imagem anterior
+                        changeImage(-1);
+                    } else {
+                        // Swipe para a esquerda -> próxima imagem
+                        changeImage(1);
+                    }
+                }
+            });
+        }
+    }
 });
