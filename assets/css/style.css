@@ -201,12 +201,12 @@ h1 {
     margin-bottom: 15px;
 }
 
-/* CORREÇÃO 3: Ajuste de Separador para o Post Meta */
+/* CORREÇÃO FINAL: Ajuste de Separador para o Post Meta */
 .post-meta {
     font-size: 0.9em;
     color: #999;
     /* REMOVIDO: display: flex para evitar a quebra do separador, agora flui como texto inline */
-    /* justify-content: flex-start; REMOVIDO */
+    /* Garante que o texto flua naturalmente, mantendo o separador junto à data */
 }
 
 /* Adiciona o separador vertical ( | ) usando um pseudo-elemento inline */
@@ -393,6 +393,7 @@ button:hover {
 }
 
 .admin-action-btn {
+    
     display: inline-block;
     margin-bottom: 25px;
 }

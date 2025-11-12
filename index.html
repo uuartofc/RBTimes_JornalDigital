@@ -16,7 +16,7 @@
         <div class="header-container">
             <div class="site-title-container">
                 <img src="assets/imgs/logo_sem_fundo.png" alt="Logo RB Times" class="header-icon">
-                </div>
+            </div>
             <nav>
                 <a href="#home" class="active">Posts</a>
                 <a href="#gallery">Galeria</a> 
@@ -29,45 +29,49 @@
 
     <div class="container">
         <section id="home" class="page-section active">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-                <h1>Últimas Notícias</h1>
-                <button id="reloadPostsBtn" class="primary-btn" style="padding: 8px 15px; font-size: 0.9em;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px;">
+                <h1>Últimas <span>Notícias</span></h1>
+                <button id="reloadPostsBtn" class="admin-action-btn" style="background-color: #6c757d;">
                     <i class="fas fa-sync-alt"></i> Recarregar Posts
                 </button>
             </div>
-            <div id="postsGrid" class="posts-grid">
+            <div class="posts-grid" id="postsGrid">
+                <p class="loading">Carregando as últimas notícias...</p>
             </div>
         </section>
 
         <section id="post-details" class="page-section">
-            <a class="back-button" href="#home" id="backToHomeBtn"><i class="fas fa-arrow-left"></i> Voltar para a Home</a>
+            <a href="#home" class="back-button" id="backToHomeBtn">
+                <i class="fas fa-arrow-left" style="margin-right: 10px;"></i> Voltar para Posts
+            </a>
+            
             <div class="detail-container">
-                <img id="detailImage" src="images/default-cover.png" alt="Imagem do Post" class="detail-image">
+                <img id="detailImage" src="" alt="Imagem de Capa">
                 <h1 id="detailTitle">Título do Post</h1>
                 <div class="detail-meta">
-                    <span id="detailDate">01/01/2024</span>
-                    <span id="detailAuthor">Autor</span>
+                    <span id="detailDate">01/01/2025</span>
+                    <span id="detailAuthor">Autor do Post</span>
                 </div>
-                <div id="detailTags" class="tag-list">
-                </div>
-                <div id="detailContent" class="detail-content">
-                </div>
+                <div id="detailContent">
+                    </div>
+                <div id="detailTags">
+                    </div>
             </div>
         </section>
 
         <section id="gallery" class="page-section">
-            <h1>Galeria de Imagens</h1>
-            <div id="galleryGrid" class="gallery-grid">
+            <h1>Galeria de <span>Imagens</span></h1>
+            <div class="gallery-grid" id="galleryGrid">
                 </div>
         </section>
 
         <section id="about" class="page-section">
-            <h1>Sobre o <span style="color: var(--primary-blue);">RB Times</span></h1>
+            <h1>Sobre o <span>RB Times</span></h1>
             <p>Este é um projeto de Jornal Digital utilizando Supabase como backend e gerenciamento completo de conteúdo via painel administrativo. O foco é em desempenho, facilidade de uso e autenticação simplificada.</p>
-
+            
             <p>Criado com foco em desenvolvimento web e sistemas dinâmicos.</p>
         </section>
-
+        
         <section id="suggestions-form" class="page-section">
             <h1>Sugira uma <span>Ideia</span></h1>
             <div class="form-card">
@@ -75,13 +79,13 @@
                 <form id="suggestionForm">
                     <label for="sugestaoName">Seu Nome:</label>
                     <input type="text" id="sugestaoName" required>
-
+                    
                     <label for="sugestaoEmail">Seu E-mail (opcional):</label>
                     <input type="email" id="sugestaoEmail">
-
+                    
                     <label for="sugestaoIdea">Sua Ideia/Sugestão:</label>
                     <textarea id="sugestaoIdea" rows="5" required></textarea>
-
+                    
                     <button type="submit">Enviar Ideia</button>
                     <p id="sugestaoMessage" class="message" style="display:none;"></p>
                 </form>
@@ -97,6 +101,7 @@
         <a class="prev" id="prevImage">&#10094;</a>
         <a class="next" id="nextImage">&#10095;</a>
     </div>
+
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="assets/js/main-script.js"></script>
 </body>

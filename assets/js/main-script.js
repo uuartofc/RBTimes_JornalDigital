@@ -9,13 +9,13 @@ const supabaseClient = createClient(supabaseConfig.url, supabaseConfig.key);
 let currentPostId = null;
 let currentImageId = null;
 
-// Variáveis para a Galeria Interativa (NOVO)
+// Variáveis para a Galeria Interativa
 let galleryImagesData = [];
 let currentImageIndex = 0;
 let startX = 0; // Para detecção de swipe
 
 // =========================================================
-// FUNÇÕES DE AUTENTICAÇÃO E ADMIN (Mantidas)
+// FUNÇÕES DE AUTENTICAÇÃO E ADMIN 
 // =========================================================
 
 async function checkAdminPassword(password) {
@@ -46,13 +46,12 @@ function handleLogout() {
     window.location.reload();
 }
 
-// =========================================================
-// FUNÇÕES DE SUGESTÕES (Mantidas)
-// =========================================================
-
 async function loadSuggestions() {
     const listDiv = document.getElementById('suggestionList');
-    if (!listDiv) return;
+    if (!listDiv) {
+        console.error("Elemento #suggestionList não encontrado no DOM.");
+        return;
+    }
     listDiv.innerHTML = '<p class="loading-message">Carregando sugestões...</p>';
 
     const { data: sugestoes, error } = await supabaseClient
@@ -61,6 +60,7 @@ async function loadSuggestions() {
         .order('created_at', { ascending: false });
 
     if (error) {
+        console.error("ERRO AO CARREGAR SUGESTÕES:", error);
         listDiv.innerHTML = `<p class="error-message">Erro ao carregar sugestões: ${error.message}.</p>`;
         return;
     }
@@ -100,34 +100,6 @@ async function deleteSuggestion(id) {
         loadSuggestions();
     }
 }
-
-async function handleSuggestionSubmit(e) {
-    e.preventDefault();
-    const name = document.getElementById('sugestaoName').value;
-    const email = document.getElementById('sugestaoEmail').value;
-    const idea = document.getElementById('sugestaoIdea').value;
-    const messageEl = document.getElementById('sugestaoMessage');
-
-    const { error } = await supabaseClient
-        .from('sugestoes')
-        .insert([{ nome: name, email: email, ideia: idea }]);
-
-    if (error) {
-        messageEl.textContent = 'Erro ao enviar sugestão: ' + error.message;
-        messageEl.className = 'message error';
-    } else {
-        messageEl.textContent = 'Sugestão enviada com sucesso! Obrigado.';
-        messageEl.className = 'message success';
-        document.getElementById('suggestionForm').reset();
-    }
-    messageEl.style.display = 'block';
-    setTimeout(() => messageEl.style.display = 'none', 5000);
-}
-
-
-// =========================================================
-// FUNÇÕES DE POSTS (ADMIN/FRONTEND) (Mantidas)
-// =========================================================
 
 async function loadAdminPosts() {
     const postListDiv = document.getElementById('postList');
@@ -251,10 +223,15 @@ async function deletePost(postId) {
     }
 }
 
+// =========================================================
+// FUNÇÕES DE CARREGAMENTO E NAVEGAÇÃO
+// =========================================================
+
 async function loadAllPosts() {
     const postsGrid = document.getElementById('postsGrid');
     if (!postsGrid) return;
     
+    // Altera o texto do botão de recarga (se existir)
     const reloadBtn = document.getElementById('reloadPostsBtn');
     if(reloadBtn) {
         reloadBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Carregando...';
@@ -269,6 +246,7 @@ async function loadAllPosts() {
         .order('data_publicacao', { ascending: false }); 
 
     if (reloadBtn) {
+        // Reverte o texto do botão após o carregamento
         reloadBtn.innerHTML = '<i class="fas fa-sync-alt"></i> Recarregar Posts';
         reloadBtn.disabled = false;
     }
@@ -295,7 +273,7 @@ async function loadAllPosts() {
             : 'images/default-cover.png'; 
 
         postCard.innerHTML = `
-            <img src="${imageUrl}" alt="${post.titulo}">
+            <img src="${imageUrl}" alt="${post.titulo}" loading="lazy">
             <div class="card-info">
                 <h3 class="post-title">${post.titulo}</h3>
                 <p class="post-summary">${post.short_descrip ? post.short_descrip.substring(0, 120) + '...' : ''}</p>
@@ -309,21 +287,16 @@ async function loadAllPosts() {
     });
 }
 
-function setActiveSection(targetId) {
-    document.querySelectorAll('.page-section').forEach(section => {
-        section.classList.remove('active');
-    });
-    const targetSection = document.getElementById(targetId);
-    if (targetSection) {
-        targetSection.classList.add('active');
-        window.scrollTo(0, 0);
-    }
-    document.querySelectorAll('header nav a').forEach(a => a.classList.remove('active'));
-    document.querySelector(`header nav a[href="#${targetId}"]`).classList.add('active');
-}
-
+// CORREÇÃO: Função showPostDetails refeita para ser robusta contra elementos nulos.
 async function showPostDetails(postId) {
-    setActiveSection('post-details');
+    const homeSection = document.getElementById('home');
+    const detailsSection = document.getElementById('post-details');
+
+    // CORREÇÃO DO ERRO: Verifica a existência do elemento antes de manipular classList
+    if (homeSection) homeSection.classList.remove('active');
+    if (detailsSection) detailsSection.classList.add('active');
+    
+    window.scrollTo(0, 0);
 
     const { data: post, error } = await supabaseClient
         .from('posts')
@@ -332,8 +305,10 @@ async function showPostDetails(postId) {
         .single();
 
     if (error) {
-        alert('Erro ao carregar detalhes do post.');
-        setActiveSection('home');
+        alert('Erro ao carregar detalhes do post: ' + error.message);
+        // Garante que o retorno é seguro em caso de falha
+        if (detailsSection) detailsSection.classList.remove('active');
+        if (homeSection) homeSection.classList.add('active');
         return;
     }
     
@@ -355,202 +330,109 @@ async function showPostDetails(postId) {
 }
 
 
-// =========================================================
-// FUNÇÕES DE GALERIA (ADMIN) (Mantidas)
-// =========================================================
-
-async function loadAdminGallery() {
-    const galleryListDiv = document.getElementById('galleryList');
-    if (!galleryListDiv) return;
-    galleryListDiv.innerHTML = '<p>Carregando imagens da galeria...</p>';
-
-    const { data: images, error } = await supabaseClient
-        .from('galeria') 
-        .select('*')
-        .order('id', { ascending: false }); 
-
-    if (error) {
-        galleryListDiv.innerHTML = `<p class="error-message">Erro: ${error.message}</p>`;
-        return;
-    }
-
-    galleryListDiv.innerHTML = '';
-    images.forEach(img => {
-        const imageItem = document.createElement('div');
-        imageItem.classList.add('post-item');
-        
-        imageItem.innerHTML = `
-            <div>
-                <p><strong>URL:</strong> ${img.image_url.length > 50 ? img.image_url.substring(0, 50) + '...' : img.image_url}</p>
-                <p>Alt Text: ${img.alt_text}</p>
-            </div>
-            <div>
-                <button class="edit-image-btn" data-id="${img.id}">Editar</button>
-                <button class="delete-image-btn" data-id="${img.id}">Excluir</button>
-            </div>
-        `;
-        galleryListDiv.appendChild(imageItem);
-    });
-}
-
-async function editImage(imageId) {
-    currentImageId = imageId;
-    const galleryForm = document.getElementById('galleryForm');
-    galleryForm.style.display = 'block';
-    
-    galleryForm.scrollIntoView({ behavior: 'smooth' });
-
-    const { data: image, error } = await supabaseClient
-        .from('galeria')
-        .select('*')
-        .eq('id', imageId)
-        .single();
-
-    if (error) {
-        alert('Erro ao carregar imagem para edição: ' + error.message);
-        return;
-    }
-
-    document.getElementById('imageUrl').value = image.image_url;
-    document.getElementById('imageAltText').value = image.alt_text;
-
-    document.getElementById('galleryForm').querySelector('h3').textContent = 'Editar Imagem (ID: ' + imageId + ')';
-}
-
-async function saveImage(e) {
+async function handleSuggestionSubmit(e) {
     e.preventDefault();
-
-    const isEditing = currentImageId !== null;
-    
-    const imageData = {
-        image_url: document.getElementById('imageUrl').value.trim(),
-        alt_text: document.getElementById('imageAltText').value.trim()
-    };
-    
-    if (imageData.image_url === '' || imageData.alt_text === '') {
-        alert('URL da Imagem e Alt Text são obrigatórios.');
-        return;
-    }
-
-    let result;
-    if (isEditing) {
-        result = await supabaseClient
-            .from('galeria')
-            .update(imageData)
-            .eq('id', currentImageId);
-    } else {
-        result = await supabaseClient
-            .from('galeria')
-            .insert([imageData]);
-    }
-
-    if (result.error) {
-        alert(`Erro ao ${isEditing ? 'atualizar' : 'criar'} imagem: ${result.error.message}`);
-    } else {
-        alert(`Imagem ${isEditing ? 'atualizada' : 'adicionada'} com sucesso!`);
-        document.getElementById('galleryEditorForm').reset();
-        document.getElementById('galleryForm').style.display = 'none';
-        currentImageId = null;
-        loadAdminGallery(); 
-    }
-}
-
-async function deleteImage(imageId) {
-    if (!confirm('Tem certeza que deseja EXCLUIR esta imagem permanentemente da galeria?')) return;
+    const name = document.getElementById('sugestaoName').value;
+    const email = document.getElementById('sugestaoEmail').value;
+    const idea = document.getElementById('sugestaoIdea').value;
+    const messageEl = document.getElementById('sugestaoMessage');
 
     const { error } = await supabaseClient
-        .from('galeria')
-        .delete()
-        .eq('id', imageId);
+        .from('sugestoes')
+        .insert([{ nome: name, email: email, ideia: idea }]);
 
     if (error) {
-        alert('Erro ao excluir imagem: ' + error.message);
+        messageEl.textContent = 'Erro ao enviar sugestão: ' + error.message;
+        messageEl.className = 'message error';
     } else {
-        alert('Imagem excluída com sucesso!');
-        loadAdminGallery(); 
+        messageEl.textContent = 'Sugestão enviada com sucesso! Obrigado.';
+        messageEl.className = 'message success';
+        document.getElementById('suggestionForm').reset();
     }
+    messageEl.style.display = 'block';
+    setTimeout(() => messageEl.style.display = 'none', 5000);
 }
 
 
 // =========================================================
-// NOVO: FUNÇÕES DE GALERIA (FRONTEND COM LIGHTBOX)
+// FUNÇÕES DE GALERIA E LIGHTBOX
 // =========================================================
 
-function showImage(index) {
-    if (galleryImagesData.length === 0) return;
-
-    currentImageIndex = (index + galleryImagesData.length) % galleryImagesData.length;
+async function loadGalleryImages() {
+    const galleryGrid = document.getElementById('galleryGrid');
+    if (!galleryGrid) return;
+    galleryGrid.innerHTML = '<p class="loading">Carregando galeria...</p>';
     
-    const image = galleryImagesData[currentImageIndex];
-    document.getElementById('modalImage').src = image.image_url;
-    document.getElementById('caption').textContent = image.alt_text;
+    const { data: images, error } = await supabaseClient
+        .from('galeria')
+        .select('*')
+        .order('id', { ascending: false });
 
-    // Controla a visibilidade das setas
-    document.getElementById('prevImage').style.display = galleryImagesData.length > 1 ? 'block' : 'none';
-    document.getElementById('nextImage').style.display = galleryImagesData.length > 1 ? 'block' : 'none';
+    if (error) {
+        galleryGrid.innerHTML = `<p class="error-message">Erro ao carregar imagens: ${error.message}</p>`;
+        return;
+    }
+
+    galleryImagesData = images; // Salva os dados para navegação no modal
+    galleryGrid.innerHTML = '';
+
+    images.forEach((img, index) => {
+        const item = document.createElement('div');
+        item.classList.add('gallery-item');
+        item.dataset.index = index; // Guarda o índice para o lightbox
+
+        item.innerHTML = `
+            <img src="${img.image_url}" alt="${img.alt_text}" loading="lazy">
+            <div class="alt-text-overlay">${img.alt_text}</div>
+        `;
+        
+        item.addEventListener('click', () => openModal(index));
+        galleryGrid.appendChild(item);
+    });
+
+    if (images.length === 0) {
+        galleryGrid.innerHTML = `<p class="empty-message">Nenhuma imagem na galeria ainda.</p>`;
+    }
 }
 
 function openModal(index) {
-    document.getElementById('galleryModal').style.display = "block";
-    document.body.style.overflow = 'hidden'; // Evita o scroll de fundo
-    showImage(index);
+    currentImageIndex = index;
+    const modal = document.getElementById('galleryModal');
+    const modalImg = document.getElementById('modalImage');
+    const captionText = document.getElementById('caption');
+    
+    if (galleryImagesData.length === 0) return;
+
+    const imgData = galleryImagesData[currentImageIndex];
+
+    modal.style.display = "block";
+    modalImg.src = imgData.image_url;
+    captionText.innerHTML = imgData.alt_text;
 }
 
 function closeModal() {
     document.getElementById('galleryModal').style.display = "none";
-    document.body.style.overflow = 'auto';
 }
 
 function changeImage(n) {
-    showImage(currentImageIndex + n);
-}
-
-async function loadGallery() {
-    const galleryGrid = document.getElementById('galleryGrid');
-    if (!galleryGrid) return;
+    currentImageIndex += n;
     
-    galleryGrid.innerHTML = '<p class="loading">Carregando imagens...</p>';
-
-    const { data: images, error } = await supabaseClient
-        .from('galeria') 
-        .select('*')
-        .order('id', { ascending: false }); 
-
-    if (error) {
-        galleryGrid.innerHTML = `<p class="error-message">Erro ao carregar galeria: ${error.message}.</p>`;
-        return;
+    if (currentImageIndex >= galleryImagesData.length) {
+        currentImageIndex = 0; // Volta para a primeira
     }
-
-    galleryImagesData = images;
-    galleryGrid.innerHTML = '';
+    if (currentImageIndex < 0) {
+        currentImageIndex = galleryImagesData.length - 1; // Vai para a última
+    }
     
-    if (images.length === 0) {
-        galleryGrid.innerHTML = `<p class="empty-message">Nenhuma imagem na galeria ainda.</p>`;
-        return;
-    }
-
-    images.forEach((img, index) => {
-        const imageCard = document.createElement('div');
-        imageCard.classList.add('gallery-item');
-
-        imageCard.innerHTML = `
-            <img src="${img.image_url}" alt="${img.alt_text}" data-index="${index}">
-            <div class="alt-text-overlay">${img.alt_text}</div>
-        `;
-        
-        // Adiciona o listener para abrir o modal
-        imageCard.addEventListener('click', () => openModal(index));
-
-        galleryGrid.appendChild(imageCard);
-    });
+    openModal(currentImageIndex);
 }
-
 
 // =========================================================
-// INICIALIZAÇÃO E LISTENERS
+// INICIALIZAÇÃO DE LISTENERS
 // =========================================================
 
 document.addEventListener('DOMContentLoaded', () => {
+    // --- ADMIN.HTML Lógica ---
     if (window.location.pathname.includes('admin.html')) {
         const adminLoginForm = document.getElementById('adminLoginForm');
         const adminContentDiv = document.querySelector('.admin-content');
@@ -558,15 +440,14 @@ document.addEventListener('DOMContentLoaded', () => {
         const logoutBtn = document.getElementById('logoutBtn');
         const postListDiv = document.getElementById('postList');
         const postEditorForm = document.getElementById('postEditorForm');
-
-
+        
+        // ... (Logica do Admin) ...
         if (checkAuthStatus()) {
             loginCard.style.display = 'none';
             adminContentDiv.style.display = 'block';
             
             loadSuggestions(); 
-            loadAdminPosts(); 
-            loadAdminGallery(); 
+            loadAdminPosts();  
         } else {
             loginCard.style.display = 'block';
             adminContentDiv.style.display = 'none';
@@ -595,7 +476,6 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         }
         
-        // Listeners dos Posts
         document.getElementById('addPostBtn').addEventListener('click', () => {
             currentPostId = null;
             document.getElementById('postForm').style.display = 'block';
@@ -624,71 +504,14 @@ document.addEventListener('DOMContentLoaded', () => {
         if (postEditorForm) {
             postEditorForm.addEventListener('submit', savePost);
         }
+
+    } 
+    // --- INDEX.HTML Lógica ---
+    else if (window.location.pathname.includes('index.html') || window.location.pathname === '/') {
         
-        // Listener para Inserir Imagem no Conteúdo
-        const insertImageToContentBtn = document.getElementById('insertImageToContentBtn');
-        if (insertImageToContentBtn) {
-            insertImageToContentBtn.addEventListener('click', () => {
-                const imageUrl = prompt("Insira a URL completa da imagem (ex: https://.../img.jpg):");
-                if (!imageUrl) return;
-
-                const imageAltText = prompt("Insira o Texto Alternativo (Alt Text) para a imagem:");
-                const altText = imageAltText ? imageAltText : "imagem do post"; 
-
-                // Adiciona o estilo para responsividade e centralização
-                const imageHtml = `<img src="${imageUrl}" alt="${altText}" style="max-width: 100%; height: auto; display: block; margin: 20px auto;">`;
-                const postContentTextarea = document.getElementById('postContent');
-
-                // Insere o HTML da imagem na posição atual do cursor no textarea
-                const start = postContentTextarea.selectionStart;
-                const end = postContentTextarea.selectionEnd;
-                const value = postContentTextarea.value;
-
-                postContentTextarea.value = value.substring(0, start) + imageHtml + '\n\n' + value.substring(end);
-                
-                // Coloca o cursor após a imagem inserida
-                postContentTextarea.selectionStart = postContentTextarea.selectionEnd = start + imageHtml.length + 2; 
-                postContentTextarea.focus();
-            });
-        }
-
-        // Listeners da Galeria
-        document.getElementById('addImageBtn').addEventListener('click', () => {
-            currentImageId = null;
-            document.getElementById('galleryForm').style.display = 'block';
-            document.getElementById('galleryForm').querySelector('h3').textContent = 'Adicionar Nova Imagem';
-            document.getElementById('galleryEditorForm').reset();
-            document.getElementById('galleryForm').scrollIntoView({ behavior: 'smooth' });
-        });
-
-        document.getElementById('cancelImageEditBtn').addEventListener('click', () => {
-            document.getElementById('galleryEditorForm').reset();
-            document.getElementById('galleryForm').style.display = 'none';
-            currentImageId = null;
-        });
-
-        const galleryListDiv = document.getElementById('galleryList');
-        if (galleryListDiv) {
-            galleryListDiv.addEventListener('click', (e) => {
-                const imageId = e.target.dataset.id;
-                if (e.target.classList.contains('edit-image-btn')) {
-                    editImage(imageId);
-                } else if (e.target.classList.contains('delete-image-btn')) {
-                    deleteImage(imageId);
-                }
-            });
-        }
-
-        const galleryEditorForm = document.getElementById('galleryEditorForm');
-        if (galleryEditorForm) {
-            galleryEditorForm.addEventListener('submit', saveImage);
-        }
-
-    }
-
-    if (window.location.pathname.includes('index.html') || window.location.pathname === '/') {
         loadAllPosts(); 
-        
+        loadGalleryImages();
+
         const suggestionForm = document.getElementById('suggestionForm');
         if(suggestionForm) {
             suggestionForm.addEventListener('submit', handleSuggestionSubmit);
@@ -699,40 +522,31 @@ document.addEventListener('DOMContentLoaded', () => {
             reloadBtn.addEventListener('click', loadAllPosts);
         }
         
-        // Navegação e Carregamento de Seções
-        document.querySelectorAll('header nav a, .back-button').forEach(link => {
-            link.addEventListener('click', function(e) {
-                if (!this.getAttribute('href').startsWith('#')) {
-                    return; 
-                }
-                
+        // NOVO: Listener para o botão "Voltar"
+        const backBtn = document.getElementById('backToHomeBtn');
+        if (backBtn) {
+            backBtn.addEventListener('click', (e) => {
                 e.preventDefault();
-                const targetId = this.getAttribute('href').substring(1);
-                
-                setActiveSection(targetId);
-
-                if(targetId === 'home') {
-                    loadAllPosts();
-                } else if (targetId === 'gallery') {
-                    loadGallery(); 
-                }
+                const detailsSection = document.getElementById('post-details');
+                const homeSection = document.getElementById('home');
+                if (detailsSection) detailsSection.classList.remove('active');
+                if (homeSection) homeSection.classList.add('active');
+                window.scrollTo(0, 0);
             });
-        });
+        }
 
-        // =========================================================
-        // NOVO: LISTENERS DO MODAL DA GALERIA
-        // =========================================================
+        // --- Lógica do Modal/Lightbox ---
         const galleryModal = document.getElementById('galleryModal');
-        const closeBtn = document.querySelector('.modal .close-btn');
+        const closeBtn = document.querySelector('.close-btn');
         const prevBtn = document.getElementById('prevImage');
         const nextBtn = document.getElementById('nextImage');
 
-        if (galleryModal) {
-            closeBtn.onclick = closeModal;
-            prevBtn.onclick = () => changeImage(-1);
-            nextBtn.onclick = () => changeImage(1);
+        if (closeBtn) closeBtn.addEventListener('click', closeModal);
+        if (prevBtn) prevBtn.addEventListener('click', () => changeImage(-1));
+        if (nextBtn) nextBtn.addEventListener('click', () => changeImage(1));
 
-            // Fechar ao clicar fora da imagem
+        if (galleryModal) {
+            // Fecha o modal ao clicar fora da imagem
             galleryModal.addEventListener('click', (e) => {
                 if (e.target === galleryModal) {
                     closeModal();
@@ -774,4 +588,33 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         }
     }
+    
+    // --- Lógica de Navegação do Header (Geral) ---
+    document.querySelectorAll('header nav a').forEach(link => {
+        link.addEventListener('click', function(e) {
+            // Permite a navegação para arquivos externos (admin.html)
+            if (!this.getAttribute('href').startsWith('#')) {
+                return; 
+            }
+            
+            e.preventDefault();
+            const targetId = this.getAttribute('href').substring(1);
+            
+            document.querySelectorAll('.page-section').forEach(section => {
+                section.classList.remove('active');
+            });
+
+            const targetSection = document.getElementById(targetId);
+            if (targetSection) {
+                targetSection.classList.add('active');
+            }
+            
+            // Reforço ao clicar no link
+            if(targetId === 'home') {
+                loadAllPosts();
+            } else if (targetId === 'gallery') {
+                loadGalleryImages();
+            }
+        });
+    });
 });
