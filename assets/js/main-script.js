@@ -11,7 +11,7 @@ let currentPostId = null;
 async function checkAdminPassword(password) {
     const { data, error } = await supabaseClient
         .from('admin_config') 
-        .select('secret_key') 
+        .select('secret_key')
         .eq('id', 1) 
         .single();
 
@@ -68,7 +68,7 @@ async function loadSuggestions() {
                     <p>${s.ideia}</p>
                     <span class="meta">${new Date(s.created_at).toLocaleDateString('pt-BR')}</span>
                 </div>
-                <button class="delete-suggestion-btn" data-id="${s.id}">Excluir</button>
+                <button class="delete-suggestion-btn" data-id="${s.id}">Excluir</button>bo
             </div>
         `;
     }).join('');
@@ -405,9 +405,9 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    if (window.location.pathname.includes('index.html')) {
-        // SOLUÇÃO 1: Carregamento inicial com atraso para garantir estabilidade na Vercel.
-        setTimeout(loadAllPosts, 50);
+    if (window.location.pathname.includes('index.html') || window.location.pathname === '/') {
+        // CORREÇÃO 2: Garante o carregamento imediato dos posts (AÇÃO REQUERIDA).
+        loadAllPosts(); 
         
         const suggestionForm = document.getElementById('suggestionForm');
         if(suggestionForm) {
