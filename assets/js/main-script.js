@@ -7,7 +7,7 @@ const { createClient } = supabase;
 const supabaseClient = createClient(supabaseConfig.url, supabaseConfig.key);
 
 let currentPostId = null;
-let currentImageId = null;
+let currentImageId = null; // Variável global para gerenciamento da galeria no Admin
 
 // Variáveis para a Galeria Interativa
 let galleryImagesData = [];
@@ -220,6 +220,117 @@ async function deletePost(postId) {
     } else {
         alert('Post excluído com sucesso!');
         loadAdminPosts(); 
+    }
+}
+
+// =========================================================
+// FUNÇÕES DE GALERIA ADMIN (NOVO CÓDIGO)
+// =========================================================
+
+async function loadAdminGalleryImages() {
+    const galleryListDiv = document.getElementById('galleryList');
+    if (!galleryListDiv) return;
+    galleryListDiv.innerHTML = '<p>Carregando imagens da galeria para edição...</p>';
+
+    const { data: images, error } = await supabaseClient
+        .from('galeria')
+        .select('*')
+        .order('id', { ascending: false }); 
+
+    if (error) {
+        galleryListDiv.innerHTML = `<p class="error-message">Erro: ${error.message}</p>`;
+        return;
+    }
+
+    galleryListDiv.innerHTML = '';
+    images.forEach(img => {
+        const imageItem = document.createElement('div');
+        imageItem.classList.add('post-item'); 
+        
+        imageItem.innerHTML = `
+            <div>
+                <h3>${img.alt_text}</h3>
+                <p>URL: ${img.image_url.substring(0, 50)}...</p>
+            </div>
+            <div>
+                <button class="edit-image-btn" data-id="${img.id}">Editar</button>
+                <button class="delete-image-btn" data-id="${img.id}">Excluir</button>
+            </div>
+        `;
+        galleryListDiv.appendChild(imageItem);
+    });
+}
+
+async function editGalleryImage(imageId) {
+    currentImageId = imageId;
+    const galleryForm = document.getElementById('galleryForm');
+    galleryForm.style.display = 'block';
+    
+    galleryForm.scrollIntoView({ behavior: 'smooth' });
+
+    const { data: image, error } = await supabaseClient
+        .from('galeria')
+        .select('*')
+        .eq('id', imageId)
+        .single();
+
+    if (error) {
+        alert('Erro ao carregar imagem para edição: ' + error.message);
+        return;
+    }
+
+    document.getElementById('imageUrl').value = image.image_url;
+    document.getElementById('imageAltText').value = image.alt_text;
+
+    document.getElementById('galleryForm').querySelector('h3').textContent = 'Editar Imagem (ID: ' + imageId + ')';
+}
+
+async function saveGalleryImage(e) {
+    e.preventDefault();
+
+    const isEditing = currentImageId !== null;
+    
+    const imageData = {
+        image_url: document.getElementById('imageUrl').value.trim(),
+        alt_text: document.getElementById('imageAltText').value,
+    };
+
+    let result;
+    if (isEditing) {
+        result = await supabaseClient
+            .from('galeria')
+            .update(imageData)
+            .eq('id', currentImageId);
+    } else {
+        result = await supabaseClient
+            .from('galeria')
+            .insert([imageData]);
+    }
+
+    if (result.error) {
+        alert(`Erro ao ${isEditing ? 'atualizar' : 'criar'} imagem: ${result.error.message}`);
+    } else {
+        alert(`Imagem ${isEditing ? 'atualizada' : 'adicionada'} com sucesso!`);
+        document.getElementById('galleryEditorForm').reset();
+        document.getElementById('galleryForm').style.display = 'none';
+        currentImageId = null;
+        loadAdminGalleryImages(); 
+    }
+}
+
+async function deleteGalleryImage(imageId) {
+    if (!confirm('Tem certeza que deseja EXCLUIR esta imagem permanentemente da galeria?')) return;
+
+    const { error } = await supabaseClient
+        .from('galeria')
+        .delete()
+        .eq('id', imageId);
+
+    if (error) {
+        alert('Erro ao excluir imagem: ' + error.message);
+    } else {
+        alert('Imagem excluída com sucesso!');
+        loadAdminGalleryImages(); 
     }
 }
 
@@ -441,13 +552,14 @@ document.addEventListener('DOMContentLoaded', () => {
         const postListDiv = document.getElementById('postList');
         const postEditorForm = document.getElementById('postEditorForm');
         
-        // ... (Logica do Admin) ...
+        // Inicialização: Carrega posts e galeria se autenticado
         if (checkAuthStatus()) {
             loginCard.style.display = 'none';
             adminContentDiv.style.display = 'block';
             
             loadSuggestions(); 
             loadAdminPosts();  
+            loadAdminGalleryImages(); // <-- NOVO: Carrega as imagens da galeria admin
         } else {
             loginCard.style.display = 'block';
             adminContentDiv.style.display = 'none';
@@ -476,6 +588,7 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         }
         
+        // Listeners para Gerenciamento de Post
         document.getElementById('addPostBtn').addEventListener('click', () => {
             currentPostId = null;
             document.getElementById('postForm').style.display = 'block';
@@ -504,7 +617,36 @@ document.addEventListener('DOMContentLoaded', () => {
         if (postEditorForm) {
             postEditorForm.addEventListener('submit', savePost);
         }
+        
+        // NOVO: Listeners para Gerenciamento de Galeria
+        document.getElementById('addImageBtn').addEventListener('click', () => {
+            currentImageId = null;
+            document.getElementById('galleryForm').style.display = 'block';
+            document.getElementById('galleryForm').querySelector('h3').textContent = 'Adicionar Nova Imagem';
+            document.getElementById('galleryEditorForm').reset();
+            document.getElementById('galleryForm').scrollIntoView({ behavior: 'smooth' });
+        });
+        
+        document.getElementById('cancelImageEditBtn').addEventListener('click', () => {
+            document.getElementById('galleryEditorForm').reset();
+            document.getElementById('galleryForm').style.display = 'none';
+            currentImageId = null;
+        });
 
+        const galleryListDiv = document.getElementById('galleryList');
+        if (galleryListDiv) {
+             galleryListDiv.addEventListener('click', (e) => {
+                const imageId = e.target.dataset.id;
+                if (e.target.classList.contains('edit-image-btn')) {
+                    editGalleryImage(imageId);
+                } else if (e.target.classList.contains('delete-image-btn')) {
+                    deleteGalleryImage(imageId);
+                }
+            });
+        }
+        
+        document.getElementById('galleryEditorForm').addEventListener('submit', saveGalleryImage);
+        
     } 
     // --- INDEX.HTML Lógica ---
     else if (window.location.pathname.includes('index.html') || window.location.pathname === '/') {
