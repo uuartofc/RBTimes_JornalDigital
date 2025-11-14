@@ -7,100 +7,173 @@ const { createClient } = supabase;
 const supabaseClient = createClient(supabaseConfig.url, supabaseConfig.key);
 
 let currentPostId = null;
-let currentImageId = null; // Variável global para gerenciamento da galeria no Admin
+let currentImageId = null; 
 
-// Variáveis para a Galeria Interativa
+// Variáveis para a Galeria Interativa (Frontend)
 let galleryImagesData = [];
 let currentImageIndex = 0;
 let startX = 0; // Para detecção de swipe
 
 // =========================================================
-// FUNÇÃO DE FORMATAÇÃO DE TEXTO PARA O EDITOR DE POSTS
+// FUNÇÕES DE UTILIDADE E MODAIS (NOVAS E CORRIGIDAS)
 // =========================================================
 
+/**
+ * Aplica formatação simples (HTML) ou abre modais. (CORRIGIDO)
+ * Está fora do DOMContentLoaded para ser chamada facilmente pelos listeners.
+ */
 function applyFormat(format, param = null) {
     const textarea = document.getElementById('postContent');
-    if (!textarea) return; // Garante que a função só roda no admin.html
+    if (!textarea) return; 
     
     const start = textarea.selectionStart;
     const end = textarea.selectionEnd;
     const selectedText = textarea.value.substring(start, end);
     let newText = '';
-    let offset = 0; // Para posicionar o cursor corretamente
+    let offset = 0; 
 
     switch (format) {
+        // Formatos HTML Simples
         case 'bold':
-            newText = `**${selectedText}**`;
-            offset = 2;
+            newText = `<strong>${selectedText}</strong>`;
+            offset = 8; // <strong>
             break;
         case 'italic':
-            newText = `*${selectedText}*`;
-            offset = 1;
+            newText = `<em>${selectedText}</em>`;
+            offset = 4; // <em>
             break;
         case 'underline':
-            newText = `<u>${selectedText}</u>`; // Usando HTML simples para sublinhado
-            offset = 4;
+            newText = `<u>${selectedText}</u>`; 
+            offset = 4; // <u>
             break;
         case 'heading':
-            newText = `\n\n## ${selectedText || 'Título Secundário'}\n`;
-            offset = 5;
+            newText = `\n\n<h2>${selectedText || 'Título Secundário'}</h2>\n\n`;
+            offset = 5; // <h2>
             break;
         case 'blockquote':
-            newText = `\n\n> ${selectedText || 'Insira sua citação aqui'}\n\n`;
-            offset = 3;
-            break;
-        case 'link':
-            const url = prompt('Insira a URL do link:');
-            if (!url) return;
-            const linkText = selectedText || 'Texto do Link';
-            newText = `[${linkText}](${url})`;
-            offset = url.length + 3;
-            break;
-        case 'image':
-            const imgUrl = prompt('Insira a URL completa da imagem:');
-            if (!imgUrl) return;
-            const altText = prompt('Insira o texto alternativo (Alt Text):');
-            // Usamos HTML completo para garantir que a imagem seja renderizada corretamente
-            newText = `\n\n<img src="${imgUrl}" alt="${altText || 'Imagem'}" />\n\n`;
-            offset = 0;
-            break;
-        case 'frame':
-            const frameUrl = prompt('Insira a URL da Imagem para a Moldura/Destaque:');
-            if (!frameUrl) return;
-            // Estilo simples para simular moldura/destaque usando inline CSS e div
-            newText = `\n\n<div style="border: 2px solid #0A66C2; padding: 10px; margin: 15px 0;">
-<img src="${frameUrl}" alt="Imagem com Moldura" style="max-width: 100%; height: auto; display: block;" />
-</div>\n\n`;
-            offset = 0;
+            newText = `\n\n<blockquote>${selectedText || 'Insira sua citação aqui'}</blockquote>\n\n`;
+            offset = 12; // <blockquote>
             break;
         case 'hr':
             newText = `\n\n<hr />\n\n`;
             offset = 0;
             break;
+        
+        // Formatos com Prompt (Link)
+        case 'link':
+            const urlLink = prompt('Insira a URL do link:', 'https://');
+            if (!urlLink) return;
+            const textLink = selectedText || prompt('Insira o texto do link:', 'Clique Aqui');
+            if (!textLink) return;
+            // Gera um link HTML com target blank
+            newText = `<a href="${urlLink}" target="_blank">${textLink}</a>`;
+            break;
+
+        // Modais (Abre e encerra a função)
+        // 'image' e 'frame' foram removidos
+            
+        case 'media': // BOTÃO ÚNICO DE MÍDIA
+            openMediaModal();
+            return; 
+        case 'custom-style':
+            openStyleModal();
+            return; 
         default:
             return;
     }
 
+    // Lógica para inserção e reposicionamento do cursor
+    
     // Insere o novo texto formatado
     textarea.value = textarea.value.substring(0, start) + newText + textarea.value.substring(end);
     
     // Reposiciona o cursor ou seleção
-    if (selectedText) {
-        // Se havia seleção, mantém o cursor no final do texto inserido
+    if (['bold', 'italic', 'underline', 'heading', 'blockquote'].includes(format) && !selectedText) {
+        // Se não havia texto selecionado, posiciona o cursor DENTRO da tag
+        textarea.selectionStart = start + offset;
+        textarea.selectionEnd = start + newText.length - (offset + 1); // Ex: <strong>[cursor]</strong>
+    } else {
+        // Se havia texto selecionado, ou é um link/imagem, posiciona DEPOIS
         textarea.selectionStart = start + newText.length;
         textarea.selectionEnd = textarea.selectionStart;
-    } else {
-        // Se não havia seleção, move o cursor para dentro do novo formato (ex: entre os asteriscos)
-        textarea.selectionStart = start + offset;
-        // Ajusta a seleção para envolver o texto de placeholder, se houver
-        textarea.selectionEnd = start + newText.length - offset; 
     }
+    
     textarea.focus();
+}
+
+/**
+ * Função utilitária para inserir texto na posição do cursor/seleção.
+ */
+function insertAtCursor(textarea, textToInsert) {
+    const start = textarea.selectionStart;
+    const end = textarea.selectionEnd;
+    
+    textarea.value = textarea.value.substring(0, start) + textToInsert + textarea.value.substring(end);
+    
+    const newPosition = start + textToInsert.length;
+    textarea.selectionStart = newPosition;
+    textarea.selectionEnd = newPosition;
+    textarea.focus();
+}
+
+/**
+ * Função para lidar com a submissão de formulários de modais.
+ */
+function handleModalSubmit(e, contentGenerator, modalId, messageId, closeModalAfter = true) {
+    e.preventDefault();
+    
+    const postContentTextarea = document.getElementById('postContent');
+    const modal = document.getElementById(modalId);
+    const messageElement = document.getElementById(messageId);
+    
+    if (!postContentTextarea || !modal || !messageElement) return;
+
+    messageElement.style.display = 'none'; 
+
+    try {
+        const generatedContent = contentGenerator(e.target);
+        
+        if (generatedContent) {
+            insertAtCursor(postContentTextarea, generatedContent);
+            
+            e.target.reset(); 
+            
+            if(closeModalAfter) modal.style.display = 'none'; 
+            
+            // Exibe mensagem de sucesso
+            messageElement.textContent = 'Conteúdo inserido com sucesso!';
+            messageElement.className = 'modal-message success';
+            messageElement.style.display = 'block';
+
+            setTimeout(() => {
+                messageElement.style.display = 'none';
+            }, 3000);
+        }
+
+    } catch (error) {
+        messageElement.textContent = `Erro: ${error.message}`;
+        messageElement.className = 'modal-message error';
+        messageElement.style.display = 'block';
+    }
+}
+
+// A função 'handleImageModalSubmit' foi removida
+// A função 'openImageModal' foi removida
+
+// Funções para abrir os modais
+function openMediaModal() {
+    const mediaModal = document.getElementById('mediaModal');
+    if (mediaModal) mediaModal.style.display = 'block';
+}
+
+function openStyleModal() {
+    const styleModal = document.getElementById('styleModal');
+    if (styleModal) styleModal.style.display = 'block';
 }
 
 
 // =========================================================
-// FUNÇÕES DE AUTENTICAÇÃO E ADMIN 
+// FUNÇÕES DE AUTENTICAÇÃO E ADMIN (MANTIDAS DO SEU CÓDIGO)
 // =========================================================
 
 async function checkAdminPassword(password) {
@@ -130,6 +203,10 @@ function handleLogout() {
     sessionStorage.removeItem('isAdminLoggedIn');
     window.location.reload();
 }
+
+// =========================================================
+// LÓGICA DE SUGESTÕES (MANTIDAS DO SEU CÓDIGO)
+// =========================================================
 
 async function loadSuggestions() {
     const listDiv = document.getElementById('suggestionList');
@@ -185,6 +262,34 @@ async function deleteSuggestion(id) {
         loadSuggestions();
     }
 }
+
+async function handleSuggestionSubmit(e) {
+    e.preventDefault();
+    const name = document.getElementById('sugestaoName').value;
+    const email = document.getElementById('sugestaoEmail').value;
+    const idea = document.getElementById('sugestaoIdea').value;
+    const messageEl = document.getElementById('sugestaoMessage');
+
+    const { error } = await supabaseClient
+        .from('sugestoes')
+        .insert([{ nome: name, email: email, ideia: idea }]);
+
+    if (error) {
+        messageEl.textContent = 'Erro ao enviar sugestão: ' + error.message;
+        messageEl.className = 'message error';
+    } else {
+        messageEl.textContent = 'Sugestão enviada com sucesso! Obrigado.';
+        messageEl.className = 'message success';
+        document.getElementById('suggestionForm').reset();
+    }
+    messageEl.style.display = 'block';
+    setTimeout(() => messageEl.style.display = 'none', 5000);
+}
+
+
+// =========================================================
+// LÓGICA DE POSTS ADMIN (MANTIDAS DO SEU CÓDIGO)
+// =========================================================
 
 async function loadAdminPosts() {
     const postListDiv = document.getElementById('postList');
@@ -309,7 +414,7 @@ async function deletePost(postId) {
 }
 
 // =========================================================
-// FUNÇÕES DE GALERIA ADMIN 
+// LÓGICA DE GALERIA ADMIN (MANTIDAS DO SEU CÓDIGO)
 // =========================================================
 
 async function loadAdminGalleryImages() {
@@ -420,14 +525,13 @@ async function deleteGalleryImage(imageId) {
 }
 
 // =========================================================
-// FUNÇÕES DE CARREGAMENTO E NAVEGAÇÃO
+// LÓGICA DE POSTS FRONTEND (MANTIDAS DO SEU CÓDIGO)
 // =========================================================
 
 async function loadAllPosts() {
     const postsGrid = document.getElementById('postsGrid');
     if (!postsGrid) return;
     
-    // Altera o texto do botão de recarga (se existir)
     const reloadBtn = document.getElementById('reloadPostsBtn');
     if(reloadBtn) {
         reloadBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Carregando...';
@@ -442,7 +546,6 @@ async function loadAllPosts() {
         .order('data_publicacao', { ascending: false }); 
 
     if (reloadBtn) {
-        // Reverte o texto do botão após o carregamento
         reloadBtn.innerHTML = '<i class="fas fa-sync-alt"></i> Recarregar Posts';
         reloadBtn.disabled = false;
     }
@@ -511,10 +614,10 @@ async function showPostDetails(postId) {
 
     document.getElementById('detailImage').src = imageUrl;
     document.getElementById('detailTitle').textContent = post.titulo;
-    document.getElementById('detailDate').textContent = new Date(post.data_publicacao).toLocaleDateString('pt-BR');
+    document.getElementById('detailDate').textContent = new Date(post.data_publica).toLocaleDateString('pt-BR');
     document.getElementById('detailAuthor').textContent = post.autor;
     
-    // O conteúdo HTML/Markdown será renderizado diretamente
+    // Renderiza o conteúdo (incluindo o novo HTML/CSS)
     document.getElementById('detailContent').innerHTML = post.conteudo || '';
     
     const tagsContainer = document.getElementById('detailTags');
@@ -524,33 +627,8 @@ async function showPostDetails(postId) {
     tagsContainer.innerHTML = tagsHtml;
 }
 
-
-async function handleSuggestionSubmit(e) {
-    e.preventDefault();
-    const name = document.getElementById('sugestaoName').value;
-    const email = document.getElementById('sugestaoEmail').value;
-    const idea = document.getElementById('sugestaoIdea').value;
-    const messageEl = document.getElementById('sugestaoMessage');
-
-    const { error } = await supabaseClient
-        .from('sugestoes')
-        .insert([{ nome: name, email: email, ideia: idea }]);
-
-    if (error) {
-        messageEl.textContent = 'Erro ao enviar sugestão: ' + error.message;
-        messageEl.className = 'message error';
-    } else {
-        messageEl.textContent = 'Sugestão enviada com sucesso! Obrigado.';
-        messageEl.className = 'message success';
-        document.getElementById('suggestionForm').reset();
-    }
-    messageEl.style.display = 'block';
-    setTimeout(() => messageEl.style.display = 'none', 5000);
-}
-
-
 // =========================================================
-// FUNÇÕES DE GALERIA E LIGHTBOX
+// LÓGICA DE GALERIA FRONTEND E LIGHTBOX (MANTIDAS DO SEU CÓDIGO)
 // =========================================================
 
 async function loadGalleryImages() {
@@ -574,7 +652,7 @@ async function loadGalleryImages() {
     images.forEach((img, index) => {
         const item = document.createElement('div');
         item.classList.add('gallery-item');
-        item.dataset.index = index; // Guarda o índice para o lightbox
+        item.dataset.index = index; 
 
         item.innerHTML = `
             <img src="${img.image_url}" alt="${img.alt_text}" loading="lazy">
@@ -613,21 +691,51 @@ function changeImage(n) {
     currentImageIndex += n;
     
     if (currentImageIndex >= galleryImagesData.length) {
-        currentImageIndex = 0; // Volta para a primeira
+        currentImageIndex = 0; 
     }
     if (currentImageIndex < 0) {
-        currentImageIndex = galleryImagesData.length - 1; // Vai para a última
+        currentImageIndex = galleryImagesData.length - 1; 
     }
     
     openModal(currentImageIndex);
 }
 
 // =========================================================
-// INICIALIZAÇÃO DE LISTENERS
+// INICIALIZAÇÃO E LISTENERS GERAIS (UNIFICADOS)
 // =========================================================
 
 document.addEventListener('DOMContentLoaded', () => {
-    // --- ADMIN.HTML Lógica ---
+    
+    // --- LÓGICA GERAL DE NAVEGAÇÃO DO HEADER ---
+    document.querySelectorAll('header nav a').forEach(link => {
+        link.addEventListener('click', function(e) {
+            if (!this.getAttribute('href').startsWith('#')) {
+                return; 
+            }
+            
+            e.preventDefault();
+            const targetId = this.getAttribute('href').substring(1);
+            
+            document.querySelectorAll('.page-section').forEach(section => {
+                section.classList.remove('active');
+            });
+            document.querySelectorAll('header nav a').forEach(a => a.classList.remove('active'));
+
+            const targetSection = document.getElementById(targetId);
+            if (targetSection) {
+                targetSection.classList.add('active');
+                this.classList.add('active');
+            }
+            
+            if(targetId === 'home') {
+                loadAllPosts();
+            } else if (targetId === 'gallery') {
+                loadGalleryImages();
+            }
+        });
+    });
+
+    // --- ADMIN.HTML Lógica (NOVA IMPLEMENTAÇÃO DE MODAIS INSERIDA AQUI) ---
     if (window.location.pathname.includes('admin.html')) {
         const adminLoginForm = document.getElementById('adminLoginForm');
         const adminContentDiv = document.querySelector('.admin-content');
@@ -672,20 +780,19 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         }
         
-        // NOVO: Listener para a Barra de Ferramentas de Formatação
+        // Listener para a Barra de Ferramentas de Formatação (Formatação Básica) - CORRIGIDO
         const toolbar = document.querySelector('.toolbar');
         if (toolbar) {
             toolbar.addEventListener('click', (e) => {
-                // Encontra o botão clicado, mesmo que o ícone (i) seja o alvo
                 let target = e.target.closest('.format-btn');
-                if (target) {
-                    const format = target.dataset.format;
-                    applyFormat(format);
-                }
+                if (!target) return;
+                
+                const format = target.dataset.format;
+                applyFormat(format); // Chama a função global
             });
         }
         
-        // Listeners para Gerenciamento de Post
+        // Listeners para Gerenciamento de Post (Mantidos)
         document.getElementById('addPostBtn').addEventListener('click', () => {
             currentPostId = null;
             document.getElementById('postForm').style.display = 'block';
@@ -715,7 +822,7 @@ document.addEventListener('DOMContentLoaded', () => {
             postEditorForm.addEventListener('submit', savePost);
         }
         
-        // Listeners para Gerenciamento de Galeria
+        // Listeners para Gerenciamento de Galeria (Mantidos)
         document.getElementById('addImageBtn').addEventListener('click', () => {
             currentImageId = null;
             document.getElementById('galleryForm').style.display = 'block';
@@ -744,8 +851,182 @@ document.addEventListener('DOMContentLoaded', () => {
         
         document.getElementById('galleryEditorForm').addEventListener('submit', saveGalleryImage);
         
+
+        // --- LÓGICA DO MODAL DE MÍDIA ÚNICO (#mediaModal) ---
+        const mediaModal = document.getElementById('mediaModal');
+        const closeMediaModalBtn = document.getElementById('closeMediaModalBtn');
+
+        // (NOVO) Lógica de troca de abas para o mediaModal
+        if (mediaModal) {
+            const mediaTabs = mediaModal.querySelectorAll('.tab-btn');
+            const mediaTabContents = mediaModal.querySelectorAll('.tab-content');
+
+            mediaTabs.forEach(tab => {
+                tab.addEventListener('click', () => {
+                    // Desativa todas as abas e conteúdos
+                    mediaTabs.forEach(t => t.classList.remove('active'));
+                    mediaTabContents.forEach(c => c.style.display = 'none');
+
+                    // Ativa a aba clicada
+                    tab.classList.add('active');
+                    const tabName = tab.getAttribute('data-tab');
+                    const activeContent = document.getElementById(tabName);
+                    if (activeContent) {
+                        activeContent.style.display = 'block';
+                    }
+                });
+            });
+        }
+        
+        // Fechar Modal de Mídia
+        if (closeMediaModalBtn) {
+            closeMediaModalBtn.addEventListener('click', () => {
+                if (mediaModal) mediaModal.style.display = 'none';
+            });
+        }
+
+        // (NOVO) 1. Formulário de Imagem Simples
+        const simpleImageForm = document.getElementById('simpleImageForm');
+        if (simpleImageForm) {
+            simpleImageForm.addEventListener('submit', (e) => handleModalSubmit(e, (form) => {
+                const url = form.querySelector('#imgUrl').value;
+                const alt = form.querySelector('#imgAlt').value;
+                const caption = form.querySelector('#imgCaption').value;
+                const alignment = form.querySelector('#imgAlignment').value;
+                
+                if (!url || !alt) throw new Error('URL e Alt Text são obrigatórios.');
+
+                let captionHtml = caption.trim() !== '' ? `\n  <figcaption>${caption}</figcaption>` : '';
+                const alignmentClass = alignment !== 'align-none' ? ` class="${alignment}"` : '';
+
+                return `\n\n<figure${alignmentClass}>
+<img src="${url}" alt="${alt}" />${captionHtml}
+</figure>\n\n`;
+            }, 'mediaModal', 'mediaModalMessage'));
+        }
+
+        // 2. Formulário de Carrossel (Existente)
+        const carouselForm = document.getElementById('carouselForm'); 
+        if (carouselForm) {
+            carouselForm.addEventListener('submit', (e) => handleModalSubmit(e, (form) => {
+                const urlsText = form.querySelector('#carouselUrls').value.trim(); 
+                
+                if (!urlsText) throw new Error('É necessário inserir pelo menos uma URL de imagem.');
+
+                const urls = urlsText.split('\n')
+                                    .map(url => url.trim())
+                                    .filter(url => url.length > 0);
+
+                if (urls.length === 0) throw new Error('Nenhuma URL válida encontrada.');
+                
+                const imagesHtml = urls.map((url, index) => {
+                    const imageAlt = `Imagem de Carrossel ${index + 1}`; 
+                    return `<img src="${url}" alt="${imageAlt}" loading="lazy" />`; 
+                }).join('\n');
+                
+                return `\n\n<div class="post-carousel-container">\n${imagesHtml}\n</div>\n\n`;
+            }, 'mediaModal', 'mediaModalMessage')); 
+        }
+
+        // 3. Formulário de Vídeo (Existente)
+        const videoForm = document.getElementById('videoForm'); 
+        if (videoForm) {
+            videoForm.addEventListener('submit', (e) => handleModalSubmit(e, (form) => {
+                const videoUrl = form.querySelector('#videoUrl').value.trim(); 
+                
+                if (!videoUrl) throw new Error('A URL do vídeo é obrigatória.');
+
+                const youtubeRegex = /^(?:https?:\/\/)?(?:www\.)?(?:youtube\.com\/(?:watch\?v=|embed\/|v\/)|youtu\.be\/)([\w-]{11})(?:\S+)?$/;
+                const match = videoUrl.match(youtubeRegex);
+
+                if (match) {
+                    const videoId = match[1];
+                    return `\n\n<div class="video-responsive-container"><iframe src="https://www.youtube.com/embed/${videoId}" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe></div>\n\n`;
+                } else {
+                    return `\n\n<video controls style="max-width: 100%; height: auto; border-radius: 6px; margin: 15px 0;">
+<source src="${videoUrl}" type="video/mp4">
+Seu navegador não suporta a tag de vídeo.
+</video>\n\n`;
+                }
+            }, 'mediaModal', 'mediaModalMessage'));
+        }
+
+        // --- LÓGICA DO MODAL DE ESTILO PERSONALIZADO (#styleModal) ---
+        const styleModal = document.getElementById('styleModal');
+        const closeStyleModalBtn = document.getElementById('closeStyleModalBtn');
+        
+        // (NOVO) Lógica de troca de abas para o styleModal
+        if (styleModal) {
+            const styleTabs = styleModal.querySelectorAll('.tab-btn');
+            const styleTabContents = styleModal.querySelectorAll('.tab-content');
+
+            styleTabs.forEach(tab => {
+                tab.addEventListener('click', () => {
+                    // Desativa todas
+                    styleTabs.forEach(t => t.classList.remove('active'));
+                    styleTabContents.forEach(c => c.style.display = 'none');
+
+                    // Ativa a clicada
+                    tab.classList.add('active');
+                    const tabName = tab.getAttribute('data-tab');
+                    const activeContent = document.getElementById(tabName);
+                    if (activeContent) {
+                        activeContent.style.display = 'block';
+                    }
+                });
+            });
+        }
+        
+        // Fechar Modal de Estilo
+        if (closeStyleModalBtn) {
+            closeStyleModalBtn.addEventListener('click', () => {
+                if (styleModal) styleModal.style.display = 'none';
+            });
+        }
+
+        // Lógica para Aplicar Atalhos de Estilo (Span com classe CSS)
+        const shortcutsTab = document.getElementById('style-shortcuts');
+        if (shortcutsTab) {
+            shortcutsTab.addEventListener('click', (e) => {
+                const target = e.target.closest('.style-shortcut-btn');
+                if (!target) return;
+                
+                const tag = target.dataset.styleTag;
+                const textarea = document.getElementById('postContent');
+                const start = textarea.selectionStart;
+                const end = textarea.selectionEnd;
+                const selectedText = textarea.value.substring(start, end) || 'Texto de Destaque'; 
+                
+                const newText = `<span class="${tag}">${selectedText}</span>`;
+                
+                insertAtCursor(textarea, newText);
+                
+                if (styleModal) styleModal.style.display = 'none'; 
+            });
+        }
+
+        // Lógica para Inserir Código HTML/CSS Personalizado
+        const customCodeForm = document.getElementById('customCodeForm');
+        if (customCodeForm) {
+            customCodeForm.addEventListener('submit', (e) => handleModalSubmit(e, (form) => {
+                const customCode = form.querySelector('#customHtmlCode').value.trim();
+                
+                if (!customCode) throw new Error('Insira o código HTML/CSS.');
+                
+                return '\n\n' + customCode + '\n\n';
+
+            }, 'styleModal', 'styleModalMessage'));
+        }
+        
+        // Lógica de fechar modais clicando fora (Unificada)
+        window.addEventListener('click', (e) => {
+            if (e.target === mediaModal) mediaModal.style.display = 'none';
+            if (e.target === styleModal) styleModal.style.display = 'none';
+            // O listener do imageModal foi removido
+        });
+
     } 
-    // --- INDEX.HTML Lógica ---
+    // --- INDEX.HTML Lógica (Mantida) ---
     else if (window.location.pathname.includes('index.html') || window.location.pathname === '/') {
         
         loadAllPosts(); 
@@ -761,7 +1042,6 @@ document.addEventListener('DOMContentLoaded', () => {
             reloadBtn.addEventListener('click', loadAllPosts);
         }
         
-        // Listener para o botão "Voltar"
         const backBtn = document.getElementById('backToHomeBtn');
         if (backBtn) {
             backBtn.addEventListener('click', (e) => {
@@ -785,14 +1065,12 @@ document.addEventListener('DOMContentLoaded', () => {
         if (nextBtn) nextBtn.addEventListener('click', () => changeImage(1));
 
         if (galleryModal) {
-            // Fecha o modal ao clicar fora da imagem
             galleryModal.addEventListener('click', (e) => {
                 if (e.target === galleryModal) {
                     closeModal();
                 }
             });
             
-            // Navegação por teclado (Esc e Setas)
             document.addEventListener('keydown', (e) => {
                 if (galleryModal.style.display === "block") {
                     if (e.key === "Escape") {
@@ -805,7 +1083,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             });
             
-            // Lógica de Swipe para mobile
             galleryModal.addEventListener('touchstart', (e) => {
                 startX = e.touches[0].clientX;
             });
@@ -814,46 +1091,14 @@ document.addEventListener('DOMContentLoaded', () => {
                 const endX = e.changedTouches[0].clientX;
                 const deltaX = endX - startX;
                 
-                // Define um limite de swipe (ex: 50px)
                 if (Math.abs(deltaX) > 50) {
                     if (deltaX > 0) {
-                        // Swipe para a direita -> imagem anterior
                         changeImage(-1);
                     } else {
-                        // Swipe para a esquerda -> próxima imagem
                         changeImage(1);
                     }
                 }
             });
         }
     }
-    
-    // --- Lógica de Navegação do Header (Geral) ---
-    document.querySelectorAll('header nav a').forEach(link => {
-        link.addEventListener('click', function(e) {
-            // Permite a navegação para arquivos externos (admin.html)
-            if (!this.getAttribute('href').startsWith('#')) {
-                return; 
-            }
-            
-            e.preventDefault();
-            const targetId = this.getAttribute('href').substring(1);
-            
-            document.querySelectorAll('.page-section').forEach(section => {
-                section.classList.remove('active');
-            });
-
-            const targetSection = document.getElementById(targetId);
-            if (targetSection) {
-                targetSection.classList.add('active');
-            }
-            
-            // Reforço ao clicar no link
-            if(targetId === 'home') {
-                loadAllPosts();
-            } else if (targetId === 'gallery') {
-                loadGalleryImages();
-            }
-        });
-    });
 });
