@@ -27,31 +27,31 @@
                     transition: background-color 0.3s; 
                 " onmouseover="this.style.backgroundColor='var(--secondary-blue)'"
                     onmouseout="this.style.backgroundColor='var(--primary-blue)'">
-                    Voltar para o Site <i class="fas fa-home"></i>
+                    <i class="fas fa-home"></i> Voltar ao Site
                 </a>
             </div>
 
             <div class="admin-login-card">
-                <h2>Admin Login</h2>
+                <h2>Acesso Restrito</h2>
                 <form id="adminLoginForm">
-                    <label for="adminPassword">Senha:</label>
-                    <input type="password" id="adminPassword" placeholder="Insira a senha de administração" required>
-                    <button type="submit">Acessar Painel</button>
+                    <label for="adminPassword">Senha de Administrador:</label>
+                    <input type="password" id="adminPassword" required>
+                    <button type="submit">Entrar</button>
                 </form>
             </div>
 
             <div class="admin-content" style="display: none;">
-
-                <div style="text-align: right; margin-bottom: 30px;">
-                    <button id="logoutBtn" style="background-color: var(--error-color);">Logout <i
-                            class="fas fa-sign-out-alt"></i></button>
+                <div class="admin-header">
+                    <h1>Área Administrativa</h1>
+                    <button id="logoutBtn" class="admin-action-btn" style="background-color: var(--error-color);">
+                        <i class="fas fa-sign-out-alt"></i> Sair
+                    </button>
                 </div>
 
-                <div class="suggestion-list-card">
-                    <h2>Gerenciar Sugestões de Posts</h2>
-                    <p>Ideias enviadas pelo público.</p>
-                    <div id="suggestionList" class="suggestion-list">
-                    </div>
+                <div class="admin-content-card suggestion-list-card">
+                    <h2>Sugestões Recebidas</h2>
+                    <div id="suggestionList" class="post-list">
+                        </div>
                 </div>
 
                 <div class="admin-content-card">
@@ -59,39 +59,70 @@
                     <button id="addPostBtn" class="admin-action-btn">Adicionar Novo Post</button>
 
                     <div id="postList" class="post-list">
-                    </div>
+                        </div>
                 </div>
 
                 <div id="postForm" class="form-card" style="display: none;">
                     <h3>Editor de Postagem</h3>
                     <form id="postEditorForm">
                         <input type="hidden" id="postId">
-                        <label for="postTitle">Título do Post:</label>
+                        <label for="postTitle">Título:</label>
                         <input type="text" id="postTitle" required>
 
                         <label for="postAuthor">Autor:</label>
                         <input type="text" id="postAuthor" required>
 
                         <label for="postDate">Data de Publicação:</label>
-                        <input type="date" id="postDate">
+                        <input type="date" id="postDate" required>
 
-                        <label for="postImage">URL da Imagem de Capa:</label>
+                        <label for="postImage">URL da Imagem de Capa (Opcional):</label>
                         <input type="url" id="postImage">
 
-                        <label for="postShortDesc">Resumo (Descrição Curta):</label>
-                        <textarea id="postShortDesc" required rows="2"></textarea>
+                        <label for="postShortDesc">Descrição Curta (Resumo):</label>
+                        <textarea id="postShortDesc" rows="3" required></textarea>
 
-                        <label for="postContent">Conteúdo Completo (Aceita HTML):</label>
-                        <button type="button" id="insertImageToContentBtn" class="admin-action-btn" style="padding: 8px 15px; margin-bottom: 10px; font-size: 0.9em;">
-                            <i class="fas fa-image"></i> Inserir Imagem no Texto
-                        </button>
-                        <textarea id="postContent" rows="10"></textarea>
+                        <label for="postContent">Conteúdo do Post (Markdown/HTML):</label>
+                        
+                        <div class="toolbar" style="margin-bottom: 5px;">
+                            <button type="button" class="format-btn" data-format="bold" title="Negrito (Ctrl+B)">
+                                <i class="fas fa-bold"></i>
+                            </button>
+                            <button type="button" class="format-btn" data-format="italic" title="Itálico (Ctrl+I)">
+                                <i class="fas fa-italic"></i>
+                            </button>
+                            <button type="button" class="format-btn" data-format="underline" title="Sublinhado (Ctrl+U)">
+                                <i class="fas fa-underline"></i>
+                            </button>
+                            <span style="border-left: 1px solid #ccc; margin: 0 5px;"></span>
+                            <button type="button" class="format-btn" data-format="heading" title="Título (H2)">
+                                <i class="fas fa-heading"></i>
+                            </button>
+                            <button type="button" class="format-btn" data-format="link" title="Inserir Link">
+                                <i class="fas fa-link"></i>
+                            </button>
+                            <button type="button" class="format-btn" data-format="image" title="Inserir Imagem no Conteúdo">
+                                <i class="fas fa-image"></i>
+                            </button>
+                            <button type="button" class="format-btn" data-format="frame" title="Moldura/Destaque em Imagem">
+                                <i class="fas fa-border-all"></i>
+                            </button>
+                            <span style="border-left: 1px solid #ccc; margin: 0 5px;"></span>
+                            <button type="button" class="format-btn" data-format="blockquote" title="Citação/Blockquote">
+                                <i class="fas fa-quote-right"></i>
+                            </button>
+                            <button type="button" class="format-btn" data-format="hr" title="Linha Horizontal">
+                                <i class="fas fa-grip-lines"></i>
+                            </button>
+                        </div>
+                        
+                        <textarea id="postContent" rows="15" required></textarea>
 
-                        <label for="postTags">Tags (separar por vírgula):</label>
+                        <label for="postTags">Tags (separadas por vírgula):</label>
                         <input type="text" id="postTags">
 
-                        <button type="submit">Salvar Postagem</button>
-                        <button type="button" id="cancelEditBtn" style="background-color: #6c757d;">Cancelar</button>
+                        <button type="submit">Salvar Post</button>
+                        <button type="button" id="cancelEditBtn"
+                            style="background-color: #6c757d;">Cancelar</button>
                     </form>
                 </div>
 
@@ -118,12 +149,11 @@
                             style="background-color: #6c757d;">Cancelar</button>
                     </form>
                 </div>
-                </div>
+            </div>
         </main>
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="assets/js/main-script.js"></script>
 </body>
-
 </html>

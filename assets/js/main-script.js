@@ -15,6 +15,91 @@ let currentImageIndex = 0;
 let startX = 0; // Para detecção de swipe
 
 // =========================================================
+// FUNÇÃO DE FORMATAÇÃO DE TEXTO PARA O EDITOR DE POSTS
+// =========================================================
+
+function applyFormat(format, param = null) {
+    const textarea = document.getElementById('postContent');
+    if (!textarea) return; // Garante que a função só roda no admin.html
+    
+    const start = textarea.selectionStart;
+    const end = textarea.selectionEnd;
+    const selectedText = textarea.value.substring(start, end);
+    let newText = '';
+    let offset = 0; // Para posicionar o cursor corretamente
+
+    switch (format) {
+        case 'bold':
+            newText = `**${selectedText}**`;
+            offset = 2;
+            break;
+        case 'italic':
+            newText = `*${selectedText}*`;
+            offset = 1;
+            break;
+        case 'underline':
+            newText = `<u>${selectedText}</u>`; // Usando HTML simples para sublinhado
+            offset = 4;
+            break;
+        case 'heading':
+            newText = `\n\n## ${selectedText || 'Título Secundário'}\n`;
+            offset = 5;
+            break;
+        case 'blockquote':
+            newText = `\n\n> ${selectedText || 'Insira sua citação aqui'}\n\n`;
+            offset = 3;
+            break;
+        case 'link':
+            const url = prompt('Insira a URL do link:');
+            if (!url) return;
+            const linkText = selectedText || 'Texto do Link';
+            newText = `[${linkText}](${url})`;
+            offset = url.length + 3;
+            break;
+        case 'image':
+            const imgUrl = prompt('Insira a URL completa da imagem:');
+            if (!imgUrl) return;
+            const altText = prompt('Insira o texto alternativo (Alt Text):');
+            // Usamos HTML completo para garantir que a imagem seja renderizada corretamente
+            newText = `\n\n<img src="${imgUrl}" alt="${altText || 'Imagem'}" />\n\n`;
+            offset = 0;
+            break;
+        case 'frame':
+            const frameUrl = prompt('Insira a URL da Imagem para a Moldura/Destaque:');
+            if (!frameUrl) return;
+            // Estilo simples para simular moldura/destaque usando inline CSS e div
+            newText = `\n\n<div style="border: 2px solid #0A66C2; padding: 10px; margin: 15px 0;">
+<img src="${frameUrl}" alt="Imagem com Moldura" style="max-width: 100%; height: auto; display: block;" />
+</div>\n\n`;
+            offset = 0;
+            break;
+        case 'hr':
+            newText = `\n\n<hr />\n\n`;
+            offset = 0;
+            break;
+        default:
+            return;
+    }
+
+    // Insere o novo texto formatado
+    textarea.value = textarea.value.substring(0, start) + newText + textarea.value.substring(end);
+    
+    // Reposiciona o cursor ou seleção
+    if (selectedText) {
+        // Se havia seleção, mantém o cursor no final do texto inserido
+        textarea.selectionStart = start + newText.length;
+        textarea.selectionEnd = textarea.selectionStart;
+    } else {
+        // Se não havia seleção, move o cursor para dentro do novo formato (ex: entre os asteriscos)
+        textarea.selectionStart = start + offset;
+        // Ajusta a seleção para envolver o texto de placeholder, se houver
+        textarea.selectionEnd = start + newText.length - offset; 
+    }
+    textarea.focus();
+}
+
+
+// =========================================================
 // FUNÇÕES DE AUTENTICAÇÃO E ADMIN 
 // =========================================================
 
@@ -224,7 +309,7 @@ async function deletePost(postId) {
 }
 
 // =========================================================
-// FUNÇÕES DE GALERIA ADMIN (NOVO CÓDIGO)
+// FUNÇÕES DE GALERIA ADMIN 
 // =========================================================
 
 async function loadAdminGalleryImages() {
@@ -398,12 +483,10 @@ async function loadAllPosts() {
     });
 }
 
-// CORREÇÃO: Função showPostDetails refeita para ser robusta contra elementos nulos.
 async function showPostDetails(postId) {
     const homeSection = document.getElementById('home');
     const detailsSection = document.getElementById('post-details');
 
-    // CORREÇÃO DO ERRO: Verifica a existência do elemento antes de manipular classList
     if (homeSection) homeSection.classList.remove('active');
     if (detailsSection) detailsSection.classList.add('active');
     
@@ -417,7 +500,6 @@ async function showPostDetails(postId) {
 
     if (error) {
         alert('Erro ao carregar detalhes do post: ' + error.message);
-        // Garante que o retorno é seguro em caso de falha
         if (detailsSection) detailsSection.classList.remove('active');
         if (homeSection) homeSection.classList.add('active');
         return;
@@ -431,6 +513,8 @@ async function showPostDetails(postId) {
     document.getElementById('detailTitle').textContent = post.titulo;
     document.getElementById('detailDate').textContent = new Date(post.data_publicacao).toLocaleDateString('pt-BR');
     document.getElementById('detailAuthor').textContent = post.autor;
+    
+    // O conteúdo HTML/Markdown será renderizado diretamente
     document.getElementById('detailContent').innerHTML = post.conteudo || '';
     
     const tagsContainer = document.getElementById('detailTags');
@@ -559,7 +643,7 @@ document.addEventListener('DOMContentLoaded', () => {
             
             loadSuggestions(); 
             loadAdminPosts();  
-            loadAdminGalleryImages(); // <-- NOVO: Carrega as imagens da galeria admin
+            loadAdminGalleryImages(); 
         } else {
             loginCard.style.display = 'block';
             adminContentDiv.style.display = 'none';
@@ -584,6 +668,19 @@ document.addEventListener('DOMContentLoaded', () => {
              suggestionList.addEventListener('click', (e) => {
                 if (e.target.classList.contains('delete-suggestion-btn')) {
                     deleteSuggestion(e.target.dataset.id);
+                }
+            });
+        }
+        
+        // NOVO: Listener para a Barra de Ferramentas de Formatação
+        const toolbar = document.querySelector('.toolbar');
+        if (toolbar) {
+            toolbar.addEventListener('click', (e) => {
+                // Encontra o botão clicado, mesmo que o ícone (i) seja o alvo
+                let target = e.target.closest('.format-btn');
+                if (target) {
+                    const format = target.dataset.format;
+                    applyFormat(format);
                 }
             });
         }
@@ -618,7 +715,7 @@ document.addEventListener('DOMContentLoaded', () => {
             postEditorForm.addEventListener('submit', savePost);
         }
         
-        // NOVO: Listeners para Gerenciamento de Galeria
+        // Listeners para Gerenciamento de Galeria
         document.getElementById('addImageBtn').addEventListener('click', () => {
             currentImageId = null;
             document.getElementById('galleryForm').style.display = 'block';
@@ -664,7 +761,7 @@ document.addEventListener('DOMContentLoaded', () => {
             reloadBtn.addEventListener('click', loadAllPosts);
         }
         
-        // NOVO: Listener para o botão "Voltar"
+        // Listener para o botão "Voltar"
         const backBtn = document.getElementById('backToHomeBtn');
         if (backBtn) {
             backBtn.addEventListener('click', (e) => {
